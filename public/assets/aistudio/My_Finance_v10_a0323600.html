@@ -1,0 +1,3114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#f5f0e6">
+  <meta name="description" content="لوحة إدارة مالية شخصية للمصروفات والإيرادات والحسابات والمستحقات والالتزامات.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>محفظتي | الإدارة المالية الشخصية</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1711'/><path d='M8 12h16M8 16h16M8 20h10' stroke='%23e0bb6a' stroke-width='2' stroke-linecap='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== المتغيرات والألوان (عاجي وذهبي فاتح / أسود دافئ وذهبي داكن) ===== */
+    :root {
+      --bg: #f5f0e6;
+      --card-bg: #fffdf8;
+      --surface-soft: #f9f5ec;
+      --border: #e6dcc8;
+      --border-focus: #b8862f;
+      --text: #1c1711;
+      --text-muted: #7d7061;
+      --primary: #1c1711;
+      --primary-accent: #b8862f;
+      --income: #0f8a5f;
+      --income-bg: #e7f5ee;
+      --expense: #c43d4b;
+      --expense-bg: #fbebec;
+      --transfer: #6b5bd6;
+      --transfer-bg: #efecfb;
+      --radius: 20px;
+      --shadow-sm: 0 2px 8px rgba(60, 40, 10, 0.05);
+      --shadow-md: 0 12px 30px -12px rgba(90, 60, 10, 0.18);
+    }
+
+    [data-theme=dark] {
+      --bg: #0e0c0a;
+      --card-bg: #171410;
+      --surface-soft: #1f1b16;
+      --border: #2e2820;
+      --border-focus: #e0bb6a;
+      --text: #f4ede0;
+      --text-muted: #9e9280;
+      --primary: #d4af5f;
+      --primary-accent: #e0bb6a;
+      --income: #3ddc97;
+      --income-bg: #0f2a20;
+      --expense: #ff7280;
+      --expense-bg: #2e1519;
+      --transfer: #9b8cff;
+      --transfer-bg: #1c1a33;
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 16px 36px -16px rgba(0, 0, 0, 0.7);
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Tajawal", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background:
+        radial-gradient(900px 420px at 90% -8%, rgba(201, 162, 75, 0.16), transparent 60%),
+        radial-gradient(700px 400px at -10% 35%, rgba(201, 162, 75, 0.08), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      padding: 14px 14px 48px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ===== شاشة القفل (PIN) ===== */
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% -10%, #35290f, #0a0908 65%);
+      color: #f4ede0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 24px 16px;
+      touch-action: manipulation;
+    }
+
+    .lock-logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #e0bb6a, #8a6a2b);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      box-shadow: 0 12px 30px -8px rgba(224, 187, 106, 0.55);
+      color: #1c1208;
+    }
+
+    .lock-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 6px; color: #f4ede0; }
+    .lock-desc { font-size: 0.85rem; color: #a79c88; margin-bottom: 26px; text-align: center; }
+
+    .pin-dots { display: flex; gap: 14px; margin-bottom: 32px; direction: ltr; }
+    .pin-dot {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2px solid rgba(224, 187, 106, 0.6);
+      background: transparent;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .pin-dot.filled {
+      background: #e0bb6a;
+      border-color: #e0bb6a;
+      transform: scale(1.15);
+      box-shadow: 0 0 12px rgba(224, 187, 106, 0.45);
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      width: 100%;
+      max-width: 270px;
+      direction: ltr;
+      touch-action: manipulation;
+    }
+
+    .num-btn {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f4ede0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: all 0.1s;
+      touch-action: manipulation;
+    }
+    .num-btn:active { background: rgba(224, 187, 106, 0.25); transform: scale(0.92); }
+    .num-btn-empty, .num-btn-action { background: transparent; border-color: transparent; box-shadow: none; }
+    .num-btn-action { font-size: 1.25rem; color: #a79c88; }
+    .num-btn-action:active { background: rgba(255, 255, 255, 0.1); color: #f4ede0; transform: scale(0.92); }
+
+    .cancel-change-btn {
+      margin-top: 20px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: none;
+      padding: 8px 16px;
+    }
+
+    /* ===== شريط الرأس العائم الأنيق (Glass Header Pill) ===== */
+    header {
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 20px;
+      background: rgba(255, 253, 248, 0.84);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    [data-theme=dark] header {
+      background: rgba(26, 22, 18, 0.84);
+      border-color: rgba(224, 187, 106, 0.2);
+    }
+
+    .header-right-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .menu-toggle-btn {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      transition: transform 0.15s ease, border-color 0.2s ease;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+    .menu-toggle-btn:hover { border-color: var(--primary-accent); }
+    .menu-toggle-btn:active { transform: scale(0.92); }
+
+    .header-info { min-width: 0; }
+    .header-info h1 {
+      font-size: 1.22rem;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-info p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .icon-btn {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      text-decoration: none;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+      touch-action: manipulation;
+    }
+    .icon-btn:hover { border-color: var(--primary-accent); }
+    .icon-btn:active { transform: scale(0.92); }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
+    .sync-pill.online .sync-dot { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+    .sync-pill.offline .sync-dot { background: #f59e0b; }
+
+    /* ===== القائمة الجانبية (Side Drawer) ===== */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 9, 8, 0.48);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      z-index: 9990;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .side-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 285px;
+      max-width: 82vw;
+      background: var(--card-bg);
+      border-left: 1px solid var(--border);
+      box-shadow: -16px 0 40px rgba(0, 0, 0, 0.18);
+      z-index: 9995;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(105%);
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+      padding: 20px 14px;
+      overflow-y: auto;
+    }
+    .side-drawer.open { transform: translateX(0); }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .drawer-brand { display: flex; align-items: center; gap: 10px; }
+    .drawer-brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #e0bb6a, #9e7328);
+      color: #1c1208;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px -6px rgba(168, 120, 42, 0.55);
+      flex-shrink: 0;
+    }
+    .drawer-brand-title { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+    .drawer-brand-sub { font-size: 0.72rem; color: var(--text-muted); }
+
+    .drawer-close-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      touch-action: manipulation;
+    }
+    .drawer-close-btn:active { transform: scale(0.92); }
+
+    .drawer-nav-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .drawer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.94rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: right;
+      transition: all 0.18s ease;
+      touch-action: manipulation;
+    }
+    .drawer-item-main { display: flex; align-items: center; gap: 12px; }
+    .drawer-item svg { width: 20px; height: 20px; stroke: var(--text-muted); transition: stroke 0.18s ease; flex-shrink: 0; }
+    .drawer-item:hover { background: var(--surface-soft); }
+    .drawer-item.active {
+      background: linear-gradient(135deg, rgba(224, 187, 106, 0.18), rgba(184, 134, 47, 0.08));
+      border-color: rgba(184, 134, 47, 0.35);
+      color: var(--primary-accent);
+    }
+    .drawer-item.active svg { stroke: var(--primary-accent); }
+
+    .drawer-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      background: var(--expense-bg);
+      color: var(--expense);
+      display: none;
+    }
+    .drawer-badge.show { display: inline-block; }
+
+    .drawer-footer {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .drawer-footer-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      color: var(--text);
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .drawer-footer-btn:active { background: var(--border); }
+
+    /* ===== كارت إجمالي الأرصدة (Smooth Champagne/Obsidian Wallet Card) ===== */
+    .stat-card#totalCard {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 14% 20%, rgba(224, 187, 106, 0.28), transparent 55%),
+        radial-gradient(circle at 90% 85%, rgba(184, 134, 47, 0.18), transparent 55%),
+        linear-gradient(135deg, #fffdf9 0%, #f7edd9 55%, #efe0c1 100%);
+      border: 1px solid rgba(184, 134, 47, 0.35);
+      border-radius: 24px;
+      padding: 20px 22px 16px;
+      box-shadow: 0 14px 32px -14px rgba(138, 102, 36, 0.28);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    [data-theme=dark] .stat-card#totalCard {
+      background:
+        radial-gradient(circle at 14% 20%, rgba(224, 187, 106, 0.2), transparent 55%),
+        radial-gradient(circle at 90% 85%, rgba(168, 120, 42, 0.16), transparent 55%),
+        linear-gradient(135deg, #1b1611 0%, #272017 55%, #382c1d 100%);
+      border-color: rgba(224, 187, 106, 0.3);
+      box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.7);
+    }
+
+    .stat-card#totalCard::after {
+      content: "";
+      position: absolute;
+      top: -45px;
+      left: -45px;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      border: 1px solid rgba(184, 134, 47, 0.14);
+      pointer-events: none;
+    }
+
+    .hero-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-title-group {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .hero-wallet-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      background: rgba(184, 134, 47, 0.14);
+      border: 1px solid rgba(184, 134, 47, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-accent);
+    }
+
+    .hero-eye-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(184, 134, 47, 0.12);
+      border: 1px solid rgba(184, 134, 47, 0.25);
+      color: var(--primary-accent);
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .hero-balance-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-start;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+      padding: 2px 0;
+    }
+
+    #totalCard #totalBal {
+      color: var(--text);
+      font-size: clamp(1.8rem, 4vw, 2.25rem);
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      margin-top: 0;
+      text-align: right;
+      direction: ltr;
+      font-variant-numeric: tabular-nums;
+    }
+
+    [data-theme=dark] #totalCard #totalBal { color: #fdf2d6; }
+
+    #totalCard #totalBal .hero-masked-dots {
+      letter-spacing: 5px;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+    }
+
+    #totalCard .hero-curr-tag {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary-accent);
+    }
+
+    .hero-footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 11px;
+      border-top: 1px solid rgba(184, 134, 47, 0.16);
+      font-size: 0.77rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+    }
+
+    #totalCard #monthNet {
+      color: var(--primary-accent);
+      font-size: 0.77rem;
+      font-weight: 800;
+      direction: ltr;
+    }
+
+    /* ===== كروت الملخص والحسابات ===== */
+    .overview-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .overview-row.tri { grid-template-columns: 1fr 1fr 1fr; }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+    .stat-card:active { transform: scale(0.99); border-color: var(--primary-accent); }
+
+    .stat-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-top: 6px;
+      direction: ltr;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-value.is-masked { letter-spacing: 3px; font-size: 1.1rem; color: var(--text-muted); }
+    .stat-value.income-val { color: var(--income); }
+    .stat-value.expense-val { color: var(--expense); }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 0 2px;
+    }
+    .section-title { font-size: 0.9rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.2px; }
+    .privacy-hint { font-size: 0.78rem; font-weight: 700; color: var(--primary-accent); cursor: pointer; }
+
+    .accounts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .acc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+    .acc-card:active { transform: scale(0.98); border-color: var(--primary-accent); }
+    .acc-card:last-child:nth-child(odd) { grid-column: span 2; }
+
+    .acc-top { display: flex; justify-content: space-between; align-items: center; }
+    .acc-name { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+    .acc-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #cbd5e1; }
+    .acc-card.is-negative .acc-status-dot { background: var(--expense); }
+
+    .acc-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-top: 8px;
+      direction: ltr;
+      text-align: right;
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .acc-value.is-masked { letter-spacing: 3px; font-size: 1.1rem; color: var(--text-muted); }
+    .acc-value.is-negative { color: var(--expense); }
+    .acc-cur { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); direction: rtl; }
+
+    /* ===== البطاقات والنماذج ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .type-switcher {
+      display: flex;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+    .type-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: 0.2s;
+      touch-action: manipulation;
+    }
+    .type-btn.active-exp { background: var(--card-bg); color: var(--expense); box-shadow: var(--shadow-sm); }
+    .type-btn.active-inc { background: var(--card-bg); color: var(--income); box-shadow: var(--shadow-sm); }
+    .type-btn.active-tra { background: var(--card-bg); color: var(--transfer); box-shadow: var(--shadow-sm); }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .add-cat-inline-btn {
+      background: rgba(184, 134, 47, 0.12);
+      border: 1px solid rgba(184, 134, 47, 0.3);
+      color: var(--primary-accent);
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .add-cat-inline-btn:active { transform: scale(0.95); }
+
+    .new-cat-box {
+      display: none;
+      background: var(--surface-soft);
+      border: 1px dashed var(--primary-accent);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 14px;
+      gap: 8px;
+      flex-direction: column;
+    }
+    .new-cat-box.open { display: flex; }
+    .new-cat-row { display: flex; gap: 8px; }
+
+    .input-ctrl, .select-ctrl {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .input-ctrl:focus, .select-ctrl:focus { border-color: var(--border-focus); background: var(--card-bg); }
+
+    .amount-box { position: relative; }
+    .amount-box input { font-size: 1.55rem; font-weight: 800; padding-left: 60px; font-variant-numeric: tabular-nums; }
+    .amount-box .curr-badge { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 800; color: var(--text-muted); }
+
+    .chips-row { display: flex; gap: 6px; margin-top: -4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+    .chips-row::-webkit-scrollbar { display: none; }
+    .chip {
+      background: var(--surface-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 7px 11px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+    .chip:active { background: var(--border); }
+
+    .dual-cols { display: flex; gap: 10px; }
+    .dual-cols .form-group { flex: 1; }
+
+    .btn-submit {
+      width: 100%;
+      min-height: 50px;
+      background: linear-gradient(135deg, #e0bb6a, #a8782a);
+      color: #1c1208;
+      border: none;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 0.96rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.12s;
+      margin-top: 6px;
+      box-shadow: 0 10px 24px -8px rgba(168, 120, 42, 0.55);
+      touch-action: manipulation;
+    }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      min-height: 36px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text);
+      touch-action: manipulation;
+    }
+    .btn-secondary:active { background: var(--border); }
+    .select-ctrl.inline { width: auto; min-height: 38px; padding: 6px 10px; font-size: 0.85rem; }
+
+    /* ===== السجل والفلاتر ===== */
+    .search-box { position: relative; margin-bottom: 12px; }
+    .filter-chips { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
+    .filter-chips::-webkit-scrollbar { display: none; }
+    .f-chip {
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      padding: 6px 13px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      touch-action: manipulation;
+    }
+    .f-chip.active { background: var(--primary-accent); color: #1c1208; border-color: var(--primary-accent); }
+
+    .tx-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tx-item:last-child { border-bottom: none; }
+    .tx-left { text-align: left; }
+    .tx-primary { font-weight: 700; font-size: 0.92rem; }
+    .tx-secondary { font-size: 0.76rem; color: var(--text-muted); margin-top: 2px; }
+    .tx-amt { font-size: 0.98rem; font-weight: 800; direction: ltr; font-variant-numeric: tabular-nums; }
+    .amt-exp { color: var(--expense); }
+    .amt-inc { color: var(--income); }
+    .amt-tra { color: var(--transfer); }
+
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; }
+    .badge-lya { background: var(--income-bg); color: var(--income); }
+    .badge-alya { background: var(--expense-bg); color: var(--expense); }
+    .badge-due { background: #fef3c7; color: #b45309; }
+    .badge-paid { background: #e0f2fe; color: #0284c7; }
+    .badge-overdue { background: var(--expense-bg); color: var(--expense); }
+
+    /* ===== التحليلات والإعدادات ===== */
+    .cat-bar-item { margin-bottom: 12px; cursor: pointer; }
+    .cat-bar-header { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; }
+    .cat-bar-bg { width: 100%; height: 7px; background: var(--surface-soft); border-radius: 6px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; border-radius: 6px; background: var(--primary-accent); }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-item:last-child { border-bottom: none; }
+    .setting-info { display: flex; flex-direction: column; gap: 2px; }
+    .setting-title { font-size: 0.92rem; font-weight: 700; }
+    .setting-desc { font-size: 0.76rem; color: var(--text-muted); line-height: 1.5; }
+    .danger-note { color: var(--expense); font-size: 0.74rem; line-height: 1.6; margin-top: 8px; }
+
+    /* ===== زر الإضافة العائم (FAB) ===== */
+    .fab-add {
+      position: fixed;
+      bottom: 22px;
+      left: 20px;
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #e0bb6a, #a8782a);
+      color: #1c1208;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 12px 28px -6px rgba(168, 120, 42, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 900;
+      transition: transform 0.18s ease, opacity 0.2s ease;
+      touch-action: manipulation;
+    }
+    .fab-add:hover { transform: translateY(-2px); }
+    .fab-add:active { transform: scale(0.93); }
+    .fab-add.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
+
+    /* ===== تبديل الشاشات والتنبيهات ===== */
+    .tab-content { display: none; flex-direction: column; gap: 16px; }
+    .tab-content.active { display: flex; }
+
+    .toast {
+      position: fixed;
+      bottom: 84px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: none;
+      z-index: 10000;
+      box-shadow: var(--shadow-md);
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    @media (min-width: 760px) {
+      body { padding: 20px 24px 60px; }
+      .app-container { gap: 20px; }
+      #tabHome.active { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.85fr); align-items: start; gap: 18px; }
+      #tabHome > #totalCard, #tabHome > .overview-row { grid-column: 1 / -1; }
+      #tabHome > #accountsSection { grid-column: 1; }
+      #tabHome > #recentHomeCard { grid-column: 2; grid-row: 3; }
+      .tab-content:not(#tabHome) { max-width: 860px; width: 100%; margin-inline: auto; }
+      .fab-add { left: 32px; bottom: 32px; }
+    }
+
+    @media (max-width: 420px) {
+      body { padding-inline: 10px; }
+      .sync-pill { display: none; }
+      .dual-cols { gap: 7px; }
+      .card { padding: 14px; }
+      .stat-card { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- شاشة القفل وإدارة الـ PIN -->
+<div id="lockScreen">
+  <div class="lock-logo">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+  </div>
+  <div class="lock-title" id="lockTitle">أدخل رمز PIN</div>
+  <div class="lock-desc" id="lockDesc">لفتح ومتابعة محفظتك المالية</div>
+
+  <div class="pin-dots">
+    <div class="pin-dot" id="dot0"></div>
+    <div class="pin-dot" id="dot1"></div>
+    <div class="pin-dot" id="dot2"></div>
+    <div class="pin-dot" id="dot3"></div>
+  </div>
+
+  <div class="numpad">
+    <button type="button" class="num-btn" data-key="1">1</button>
+    <button type="button" class="num-btn" data-key="2">2</button>
+    <button type="button" class="num-btn" data-key="3">3</button>
+    <button type="button" class="num-btn" data-key="4">4</button>
+    <button type="button" class="num-btn" data-key="5">5</button>
+    <button type="button" class="num-btn" data-key="6">6</button>
+    <button type="button" class="num-btn" data-key="7">7</button>
+    <button type="button" class="num-btn" data-key="8">8</button>
+    <button type="button" class="num-btn" data-key="9">9</button>
+    <div class="num-btn-empty"></div>
+    <button type="button" class="num-btn" data-key="0">0</button>
+    <button type="button" class="num-btn num-btn-action" id="deleteKeyBtn" title="مسح">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+        <line x1="18" y1="9" x2="12" y2="15"></line>
+        <line x1="12" y1="9" x2="18" y2="15"></line>
+      </svg>
+    </button>
+  </div>
+
+  <button type="button" class="cancel-change-btn" id="cancelChangeBtn" onclick="cancelPinChange()">إلغاء التغيير والعودة</button>
+</div>
+
+<!-- القائمة الجانبية (Side Drawer) -->
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+<aside class="side-drawer" id="sideDrawer" aria-label="القائمة الرئيسية">
+  <div class="drawer-header">
+    <div class="drawer-brand">
+      <div class="drawer-brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+          <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+          <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="drawer-brand-title">محفظتي</div>
+        <div class="drawer-brand-sub">الإدارة المالية الشخصية</div>
+      </div>
+    </div>
+    <button type="button" class="drawer-close-btn" onclick="closeDrawer()" aria-label="إغلاق القائمة">✕</button>
+  </div>
+
+  <nav class="drawer-nav-list">
+    <button type="button" class="drawer-item active" data-tab="home" onclick="switchNavTab('home')">
+      <span class="drawer-item-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        <span>الرئيسية</span>
+      </span>
+    </button>
+
+    <button type="button" class="drawer-item" data-tab="add" onclick="switchNavTab('add')">
+      <span class="drawer-item-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <span>الإضافة</span>
+      </span>
+    </button>
+
+    <button type="button" class="drawer-item" data-tab="debts" onclick="switchNavTab('debts')">
+      <span class="drawer-item-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+          <line x1="2" y1="10" x2="22" y2="10"></line>
+        </svg>
+        <span>المستحقات</span>
+      </span>
+      <span class="drawer-badge" id="drawerDebtBadge">0</span>
+    </button>
+
+    <button type="button" class="drawer-item" data-tab="reminders" onclick="switchNavTab('reminders')">
+      <span class="drawer-item-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span>التنبيهات</span>
+      </span>
+      <span class="drawer-badge" id="drawerRemBadge">0</span>
+    </button>
+
+    <button type="button" class="drawer-item" data-tab="history" onclick="switchNavTab('history')">
+      <span class="drawer-item-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>السجل</span>
+      </span>
+    </button>
+
+    <button type="button" class="drawer-item" data-tab="stats" onclick="switchNavTab('stats')">
+      <span class="drawer-item-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>التحليلات والمصروفات</span>
+      </span>
+    </button>
+
+    <button type="button" class="drawer-item" data-tab="settings" onclick="switchNavTab('settings')">
+      <span class="drawer-item-main">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>الإعدادات</span>
+      </span>
+    </button>
+  </nav>
+
+  <div class="drawer-footer">
+    <a href="https://docs.google.com/spreadsheets/d/1FPTv7C_rNgHdn2bpTsjs2hQEXHDEvdk5C1TiQEb35ak/edit" target="_blank" class="drawer-footer-btn">
+      <span>فتح شيت جوجل ↗</span>
+    </a>
+    <button type="button" class="drawer-footer-btn" onclick="closeDrawer(); lockApp();">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <span>قفل التطبيق</span>
+    </button>
+  </div>
+</aside>
+
+<div class="app-container">
+  <!-- رأس الصفحة العائم الأنيق (بدون زر العين المكرر) -->
+  <header>
+    <div class="header-right-group">
+      <button type="button" class="menu-toggle-btn" onclick="openDrawer()" aria-label="فتح القائمة" title="القائمة">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <div class="header-info">
+        <h1 id="screenHeading">الرئيسية</h1>
+        <p id="todayDateTxt"></p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="sync-pill" id="connectionState" aria-live="polite"><span class="sync-dot"></span><span id="connectionLabel">جارٍ الاتصال</span></div>
+      <button class="icon-btn" title="تحديث البيانات" onclick="fetchData()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= TAB 1: الرئيسية ================= -->
+  <div class="tab-content active" id="tabHome">
+    <!-- الكارت الوحيد للتحكم في إظهار/إخفاء كل الأرصدة -->
+    <div class="stat-card" id="totalCard" onclick="toggleGlobalPrivacy()">
+      <div class="hero-top-row">
+        <span class="hero-title-group">
+          <span class="hero-wallet-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+            </svg>
+          </span>
+          <span>إجمالي الأرصدة</span>
+        </span>
+        <span class="hero-eye-pill" id="heroEyePill">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span id="heroEyeText">إظهار</span>
+        </span>
+      </div>
+      <div class="hero-balance-row">
+        <div class="stat-value" id="totalBal"></div>
+      </div>
+      <div class="hero-footer-row">
+        <span id="heroAccCount">المحافظ النشطة</span>
+        <span id="monthNet">اضغط للكشف السريع</span>
+      </div>
+    </div>
+
+    <!-- كروت ملخص الشهر التفاعلية القابلة للإخفاء/الإظهار الفردي -->
+    <div class="overview-row">
+      <div class="stat-card" onclick="toggleOverviewPrivacy('expense')">
+        <span class="stat-label">
+          <span>صرف الشهر الحالي</span>
+          <span class="acc-status-dot" style="background:var(--expense);"></span>
+        </span>
+        <div class="stat-value expense-val" id="monthExpenseVal"><span class="stat-value is-masked">••••••</span></div>
+      </div>
+      <div class="stat-card" onclick="toggleOverviewPrivacy('income')">
+        <span class="stat-label">
+          <span>قبض الشهر الحالي</span>
+          <span class="acc-status-dot" style="background:var(--income);"></span>
+        </span>
+        <div class="stat-value income-val" id="monthIncomeVal"><span class="stat-value is-masked">••••••</span></div>
+      </div>
+    </div>
+
+    <!-- شبكة الحسابات والمحافظ (بدون زر إظهار الكل المكرر) -->
+    <div id="accountsSection">
+      <div class="section-head">
+        <span class="section-title">الأرصدة والمحافظ</span>
+      </div>
+      <div class="accounts-grid" id="accountsGrid"></div>
+    </div>
+
+    <!-- المعاملات الأخيرة على الرئيسية -->
+    <div class="card" id="recentHomeCard">
+      <div class="section-head" style="margin-bottom: 6px;">
+        <span class="section-title">آخر العمليات</span>
+        <span class="privacy-hint" onclick="switchNavTab('history')">عرض الكل ➔</span>
+      </div>
+      <div id="homeRecentTxList"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 2: تسجيل حركة جديدة + إضافة تصنيف جديد ================= -->
+  <div class="tab-content" id="tabAdd">
+    <div class="card">
+      <div class="type-switcher">
+        <button type="button" class="type-btn active-exp" id="btnExp" onclick="switchType('صرف')">صرف</button>
+        <button type="button" class="type-btn" id="btnInc" onclick="switchType('قبض')">قبض</button>
+        <button type="button" class="type-btn" id="btnTra" onclick="switchType('تحويل بين حسابات')">تحويل</button>
+      </div>
+
+      <form id="txForm" onsubmit="handleFormSubmit(event)">
+        <input type="hidden" id="txType" value="صرف">
+
+        <div class="form-group">
+          <label>المبلغ</label>
+          <div class="amount-box">
+            <input type="number" step="0.01" inputmode="decimal" id="txAmount" class="input-ctrl" placeholder="0.00" required>
+            <span class="curr-badge">ج.م</span>
+          </div>
+        </div>
+
+        <div class="chips-row">
+          <button type="button" class="chip" onclick="bumpAmount(1)">+1</button>
+          <button type="button" class="chip" onclick="bumpAmount(5)">+5</button>
+          <button type="button" class="chip" onclick="bumpAmount(10)">+10</button>
+          <button type="button" class="chip" onclick="bumpAmount(50)">+50</button>
+          <button type="button" class="chip" onclick="bumpAmount(100)">+100</button>
+          <button type="button" class="chip" onclick="bumpAmount(200)">+200</button>
+          <button type="button" class="chip" onclick="bumpAmount(500)">+500</button>
+          <button type="button" class="chip" onclick="bumpAmount(1000)">+1000</button>
+          <button type="button" class="chip" onclick="document.getElementById('txAmount').value=''">مسح</button>
+        </div>
+
+        <div class="dual-cols">
+          <div class="form-group">
+            <label id="fromLabel">طريقة الدفع</label>
+            <select id="fromAcc" class="select-ctrl" required></select>
+          </div>
+          <div class="form-group" id="catGroup">
+            <label>
+              <span>التصنيف</span>
+              <button type="button" class="add-cat-inline-btn" onclick="toggleNewCategoryBox()">+ تصنيف جديد</button>
+            </label>
+            <select id="txCat" class="select-ctrl" onchange="handleCategorySelectChange(this)"></select>
+          </div>
+        </div>
+
+        <!-- صندوق إضافة تصنيف جديد يتزامن مع الشيت مباشرة -->
+        <div class="new-cat-box" id="newCatBox">
+          <label id="newCatLabel" style="font-size:0.8rem;font-weight:800;color:var(--primary-accent);">إضافة تصنيف صرف جديد إلى الشيت</label>
+          <div class="new-cat-row">
+            <input type="text" id="newCatInput" class="input-ctrl" autocomplete="off">
+            <button type="button" class="btn-secondary" id="saveNewCatBtn" style="background:var(--primary-accent);color:#1c1208;border:none;white-space:nowrap;" onclick="submitNewCategory()">حفظ</button>
+            <button type="button" class="btn-secondary" onclick="toggleNewCategoryBox(false)">✕</button>
+          </div>
+        </div>
+
+        <div class="form-group" id="toGroup" style="display: none;">
+          <label>إلى حساب</label>
+          <select id="toAcc" class="select-ctrl"></select>
+        </div>
+
+        <div class="dual-cols">
+          <div class="form-group">
+            <label>البيان / الوصف</label>
+            <input type="text" id="txDesc" class="input-ctrl" list="descList" autocomplete="off"><datalist id="descList"></datalist>
+          </div>
+          <div class="form-group" style="max-width: 140px;">
+            <label>التاريخ</label>
+            <input type="date" id="txDate" class="input-ctrl" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">تسجيل الحركة في الشيت</button>
+        <button type="button" class="btn-secondary" id="cancelEditBtn" style="display:none;width:100%;margin-top:8px;" onclick="cancelEdit()">إلغاء التعديل</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= TAB 3: المستحقات (مدين / داين) ================= -->
+  <div class="tab-content" id="tabDebts">
+    <div class="overview-row tri">
+      <div class="stat-card" style="padding:10px;">
+        <span class="stat-label">مدين (ليا)</span>
+        <div class="stat-value income-val" id="totalLyaVal" style="font-size:1.05rem;">0.00 ج.م</div>
+      </div>
+      <div class="stat-card" style="padding:10px;">
+        <span class="stat-label">داين (عليا)</span>
+        <div class="stat-value expense-val" id="totalAlyaVal" style="font-size:1.05rem;">0.00 ج.م</div>
+      </div>
+      <div class="stat-card" style="padding:10px;">
+        <span class="stat-label">الصافي</span>
+        <div class="stat-value" id="netDebtsVal" style="font-size:1.05rem;">0.00 ج.م</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head" style="margin-bottom:10px;">
+        <span class="section-title">تسجيل مستحق</span>
+      </div>
+      <form id="debtForm" onsubmit="handleDebtSubmit(event)">
+        <div class="type-switcher" style="margin-bottom:14px;">
+          <button type="button" class="type-btn active-inc" id="btnLya" onclick="setDebtType('ليا')">مدين (ليا)</button>
+          <button type="button" class="type-btn" id="btnAlya" onclick="setDebtType('عليا')">داين (عليا)</button>
+        </div>
+        <input type="hidden" id="debtTypeInput" value="ليا">
+
+        <div class="form-group">
+          <label id="debtPersonLabel">اسم المدين</label>
+          <input type="text" id="debtDesc" class="input-ctrl" list="debtPersonList" autocomplete="off" required>
+          <datalist id="debtPersonList"></datalist>
+        </div>
+
+        <div class="dual-cols">
+          <div class="form-group">
+            <label>المبلغ</label>
+            <div class="amount-box">
+              <input type="number" step="0.01" inputmode="decimal" id="debtAmount" class="input-ctrl" placeholder="0.00" required>
+              <span class="curr-badge">ج.م</span>
+            </div>
+          </div>
+          <div class="form-group" style="max-width: 155px;">
+            <label>التاريخ</label>
+            <input type="date" id="debtDate" class="input-ctrl" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="debtSubmitBtn">حفظ المستحق في الشيت</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="filter-chips">
+        <button type="button" class="f-chip active" onclick="setDebtFilter('all', this)">الكل</button>
+        <button type="button" class="f-chip" onclick="setDebtFilter('مستحق', this)">معلّق فقط</button>
+        <button type="button" class="f-chip" onclick="setDebtFilter('ليا', this)">مدين (ليا)</button>
+        <button type="button" class="f-chip" onclick="setDebtFilter('عليا', this)">داين (عليا)</button>
+        <button type="button" class="f-chip" onclick="setDebtFilter('تم السداد', this)">تم السداد</button>
+      </div>
+
+      <div id="debtsList">
+        <div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.85rem;">لا توجد مستحقات مسجلة بعد</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 4: التنبيهات والالتزامات ================= -->
+  <div class="tab-content" id="tabReminders">
+    <div class="overview-row">
+      <div class="stat-card">
+        <span class="stat-label">التزامات قادمة</span>
+        <div class="stat-value" id="upcomingRemCount" style="color:var(--primary-accent);">0 التزام</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">إجمالي المطلوب سداده</span>
+        <div class="stat-value expense-val" id="upcomingRemSum">0.00 ج.م</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head" style="margin-bottom:10px;">
+        <span class="section-title">إضافة موعد دفع / تنبيه</span>
+      </div>
+      <form id="reminderForm" onsubmit="handleReminderSubmit(event)">
+        <div class="dual-cols">
+          <div class="form-group" style="flex:2;">
+            <label>البيان / الالتزام</label>
+            <input type="text" id="remDesc" class="input-ctrl" required>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>المبلغ المتوقع</label>
+            <input type="number" step="0.01" inputmode="decimal" id="remAmount" class="input-ctrl" placeholder="0.00" required>
+          </div>
+        </div>
+
+        <div class="dual-cols">
+          <div class="form-group" style="flex:1;">
+            <label>تاريخ الاستحقاق</label>
+            <input type="date" id="remDueDate" class="input-ctrl" required>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>التكرار</label>
+            <select id="remRepeat" class="select-ctrl">
+              <option value="شهري">شهري</option>
+              <option value="لمرة واحدة">لمرة واحدة</option>
+              <option value="أسبوعي">أسبوعي</option>
+              <option value="سنوي">سنوي</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>ملاحظات إضافية (اختياري)</label>
+          <input type="text" id="remNotes" class="input-ctrl">
+        </div>
+
+        <button type="submit" class="btn-submit" id="remSubmitBtn">حفظ التنبيه في الشيت</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="section-head" style="margin-bottom:8px;">
+        <span class="section-title">المواعيد والالتزامات القادمة</span>
+      </div>
+      <div id="remindersList">
+        <div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.85rem;">لا توجد تنبيهات مسجلة بعد</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 5: سجل العمليات الكامل والبحث ================= -->
+  <div class="tab-content" id="tabHistory">
+    <div class="card">
+      <div class="search-box">
+        <input type="text" id="txSearchInput" class="input-ctrl" placeholder="ابحث بالبيان أو التصنيف أو الحساب..." oninput="filterHistoryList()">
+      </div>
+
+      <div class="filter-chips">
+        <button type="button" class="f-chip active" onclick="setHistoryFilter('all', this)">الكل</button>
+        <button type="button" class="f-chip" onclick="setHistoryFilter('صرف', this)">صرف</button>
+        <button type="button" class="f-chip" onclick="setHistoryFilter('قبض', this)">قبض</button>
+        <button type="button" class="f-chip" onclick="setHistoryFilter('تحويل', this)">تحويلات</button>
+      </div>
+
+      <div id="fullHistoryList"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 6: الإحصائيات والتحليلات ================= -->
+  <div class="tab-content" id="tabStats">
+    <div class="overview-row">
+      <div class="stat-card">
+        <span class="stat-label">أعلى بند صرف</span>
+        <div class="stat-value" id="topExpenseCat" style="font-size: 1rem; color: var(--text);">جاري الحساب...</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">متوسط الصرف اليومي</span>
+        <div class="stat-value expense-val" id="dailyAvgExpense">0.00 ج.م</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head" style="margin-bottom: 12px;">
+        <span class="section-title">توزيع المصروفات حسب التصنيف</span>
+      </div>
+      <div id="categoryBreakdownContainer"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 7: الإعدادات والأمان ================= -->
+  <div class="tab-content" id="tabSettings">
+    <div class="card">
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-title">رمز PIN الحماية</div>
+          <div class="setting-desc">تغيير رمز المرور الخاص بالتطبيق</div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="startChangePin()">تغيير الـ PIN</button>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-title">قفل التطبيق الآن</div>
+          <div class="setting-desc">قفل الشاشة فورياً للحفاظ على الخصوصية</div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="lockApp()">قفل الشاشة</button>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-title">فتح شيت جوجل مباشرة</div>
+          <div class="setting-desc">الانتقال للشيت الأساسي وجداول الأستاذ والمستحقات</div>
+        </div>
+        <a href="https://docs.google.com/spreadsheets/d/1FPTv7C_rNgHdn2bpTsjs2hQEXHDEvdk5C1TiQEb35ak/edit" target="_blank" class="btn-secondary" style="text-decoration:none;">فتح الشيت ↗</a>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-title">تصدير المعاملات (Backup)</div>
+          <div class="setting-desc">ملف Excel كامل (معاملات، أرصدة، ملخص شهري، مستحقات، التزامات) أو CSV</div>
+        </div>
+        <span style="display:flex;gap:6px;"><button type="button" class="btn-secondary" onclick="exportExcel()">Excel</button><button type="button" class="btn-secondary" onclick="exportTransactionsCSV()">CSV</button></span>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-title">نسخة احتياطية كاملة</div>
+          <div class="setting-desc">حفظ نسخة JSON تشمل الحركات والمستحقات والتنبيهات والإعدادات المحلية</div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="exportFullBackup()">حفظ نسخة</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-title">استعادة نسخة احتياطية</div>
+          <div class="setting-desc">استعادة بيانات محلية من ملف JSON سابق</div>
+        </div>
+        <button type="button" class="btn-secondary" onclick="document.getElementById('backupImportFile').click()">استعادة</button>
+        <input type="file" id="backupImportFile" accept="application/json,.json" hidden onchange="importFullBackup(event)">
+      </div>
+      <p class="danger-note">تنبيه: النسخة والاستعادة محليتان على هذا الجهاز، ولا تقومان بتعديل Google Sheets. احتفظ بنسخة آمنة من الملف.</p>
+
+      <div class="setting-item">
+        <div class="setting-info"><div class="setting-title">المظهر</div><div class="setting-desc">تلقائي حسب الجهاز، أو فاتح، أو داكن</div></div>
+        <select class="select-ctrl inline" id="themeSel" onchange="setTheme(this.value)"><option value="auto">تلقائي</option><option value="light">فاتح</option><option value="dark">داكن</option></select>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info"><div class="setting-title">القفل التلقائي</div><div class="setting-desc">يُقفل التطبيق بعد ترك الشاشة لفترة</div></div>
+        <select class="select-ctrl inline" id="lockSel" onchange="safeStorage.setItem('autolock', this.value)"><option value="0">بدون</option><option value="1">بعد دقيقة</option><option value="5">بعد 5 دقائق</option></select>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info"><div class="setting-title">حركات بانتظار الإرسال</div><div class="setting-desc" id="queueInfo"></div></div>
+        <button type="button" class="btn-secondary" onclick="flushQueue()">إرسال الآن</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- زر الإضافة السريعة العائم -->
+<button type="button" class="fab-add" id="fabAddBtn" onclick="switchNavTab('add')" title="إضافة حركة جديدة" aria-label="إضافة حركة جديدة">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+</button>
+
+<!-- مودال تفاصيل وحذف وتعديل المعاملة -->
+<div id="txModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20000;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeTx()">
+  <div class="card" style="width:100%;max-width:520px;border-radius:20px 20px 0 0;">
+    <div id="txModalBody"></div>
+    <div class="dual-cols" style="margin-top:14px;">
+      <button type="button" class="btn-secondary" style="flex:1;" onclick="startEdit()">تعديل</button>
+      <button type="button" class="btn-secondary" style="flex:1;color:var(--expense);" onclick="deleteTx()">حذف</button>
+    </div>
+    <button type="button" class="cancel-change-btn" style="display:block;margin:8px auto 0;" onclick="closeTx()">إغلاق</button>
+  </div>
+</div>
+
+<div class="toast" id="toastMessage">تم بنجاح</div>
+
+<script>
+  // ==========================================
+  // نظام تخزين آمن (Safe Storage) يدعم الموبايل والـ file:///
+  // ==========================================
+  const safeStorage = {
+    _memory: {},
+    getItem: function(key) {
+      try {
+        if (window.localStorage) {
+          const val = window.localStorage.getItem(key);
+          if (val !== null) return val;
+        }
+      } catch (e) {}
+      return this._memory[key] || null;
+    },
+    setItem: function(key, val) {
+      this._memory[key] = val;
+      try {
+        if (window.localStorage) {
+          window.localStorage.setItem(key, val);
+        }
+      } catch (e) {}
+    },
+    removeItem: function(key) {
+      delete this._memory[key];
+      try {
+        if (window.localStorage) {
+          window.localStorage.removeItem(key);
+        }
+      } catch (e) {}
+    }
+  };
+
+  // ==========================================
+  // نظام الأمان والـ PIN
+  // ==========================================
+  let storedPin = safeStorage.getItem('app_user_pin');
+  let currentInputPin = "";
+  let pinFlowMode = "unlock";
+  let tempNewPin = "";
+
+  function initSecurity() {
+    storedPin = safeStorage.getItem('app_user_pin');
+    if (!storedPin) {
+      pinFlowMode = "setup_first";
+      document.getElementById('lockTitle').innerText = "تعيين رمز PIN جديد";
+      document.getElementById('lockDesc').innerText = "قم بإنشاء رمز من 4 أرقام لحماية محفظتك";
+      document.getElementById('cancelChangeBtn').style.display = "none";
+      document.getElementById('lockScreen').style.display = "flex";
+    } else {
+      pinFlowMode = "unlock";
+      document.getElementById('lockTitle').innerText = "أدخل رمز PIN";
+      document.getElementById('lockDesc').innerText = "لفتح ومتابعة محفظتك المالية";
+      document.getElementById('cancelChangeBtn').style.display = "none";
+      document.getElementById('lockScreen').style.display = "flex";
+    }
+  }
+
+  function startChangePin() {
+    pinFlowMode = "change_verify_old";
+    currentInputPin = "";
+    tempNewPin = "";
+    updateDots();
+    document.getElementById('lockTitle').innerText = "تغيير رمز PIN";
+    document.getElementById('lockDesc').innerText = "أدخل رمز PIN الحالي أولاً للمتابعة";
+    document.getElementById('cancelChangeBtn').style.display = "inline-block";
+    document.getElementById('lockScreen').style.display = "flex";
+  }
+
+  function cancelPinChange() {
+    pinFlowMode = "unlock";
+    currentInputPin = "";
+    tempNewPin = "";
+    updateDots();
+    document.getElementById('cancelChangeBtn').style.display = "none";
+    document.getElementById('lockScreen').style.display = "none";
+  }
+
+  function updateDots() {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('dot' + i);
+      if (dot) {
+        if (i < currentInputPin.length) dot.classList.add('filled');
+        else dot.classList.remove('filled');
+      }
+    }
+  }
+
+  function pressKey(num) {
+    if (Date.now() < lockUntil) return;
+    if (currentInputPin.length < 4) {
+      currentInputPin += num;
+      updateDots();
+      if (currentInputPin.length === 4) {
+        setTimeout(handlePinComplete, 160);
+      }
+    }
+  }
+
+  function deleteKey() {
+    if (currentInputPin.length > 0) {
+      currentInputPin = currentInputPin.slice(0, -1);
+      updateDots();
+    }
+  }
+
+  function handlePinComplete() {
+    storedPin = safeStorage.getItem('app_user_pin');
+    if (pinFlowMode === "unlock") {
+      if (currentInputPin === storedPin) {
+        unlockApp();
+      } else {
+        wrongPin();
+        currentInputPin = "";
+        updateDots();
+      }
+    } else if (pinFlowMode === "setup_first") {
+      tempNewPin = currentInputPin;
+      currentInputPin = "";
+      pinFlowMode = "setup_confirm";
+      updateDots();
+      document.getElementById('lockTitle').innerText = "تأكيد رمز PIN";
+      document.getElementById('lockDesc').innerText = "أعد إدخال نفس الرمز للتأكيد";
+    } else if (pinFlowMode === "setup_confirm") {
+      if (currentInputPin === tempNewPin) {
+        safeStorage.setItem('app_user_pin', currentInputPin);
+        storedPin = currentInputPin;
+        showToast('تم تعيين رمز PIN بنجاح ✅');
+        unlockApp();
+      } else {
+        showToast('الرمز غير متطابق! أعد المحاولة ❌');
+        tempNewPin = "";
+        currentInputPin = "";
+        pinFlowMode = "setup_first";
+        updateDots();
+        document.getElementById('lockTitle').innerText = "تعيين رمز PIN جديد";
+        document.getElementById('lockDesc').innerText = "قم بإنشاء رمز من 4 أرقام";
+      }
+    } else if (pinFlowMode === "change_verify_old") {
+      if (currentInputPin === storedPin) {
+        currentInputPin = "";
+        pinFlowMode = "change_new";
+        updateDots();
+        document.getElementById('lockTitle').innerText = "الرمز الجديد";
+        document.getElementById('lockDesc').innerText = "أدخل رمز PIN الجديد المكون من 4 أرقام";
+      } else {
+        showToast('رمز PIN الحالي غير صحيح ❌');
+        currentInputPin = "";
+        updateDots();
+      }
+    } else if (pinFlowMode === "change_new") {
+      tempNewPin = currentInputPin;
+      currentInputPin = "";
+      pinFlowMode = "change_confirm";
+      updateDots();
+      document.getElementById('lockTitle').innerText = "تأكيد الرمز الجديد";
+      document.getElementById('lockDesc').innerText = "أعد إدخال الرمز الجديد للتأكيد";
+    } else if (pinFlowMode === "change_confirm") {
+      if (currentInputPin === tempNewPin) {
+        safeStorage.setItem('app_user_pin', currentInputPin);
+        storedPin = currentInputPin;
+        showToast('تم تغيير رمز PIN بنجاح ✅');
+        cancelPinChange();
+      } else {
+        showToast('الرمز غير متطابق! أعد المحاولة ❌');
+        currentInputPin = "";
+        pinFlowMode = "change_new";
+        updateDots();
+        document.getElementById('lockTitle').innerText = "الرمز الجديد";
+        document.getElementById('lockDesc').innerText = "أدخل رمز PIN الجديد";
+      }
+    }
+  }
+
+  function unlockApp() {
+    failCount = 0;
+    pinFlowMode = "unlock";
+    document.getElementById('lockScreen').style.display = 'none';
+    currentInputPin = "";
+    updateDots();
+  }
+
+  function lockApp() {
+    pinFlowMode = "unlock";
+    currentInputPin = "";
+    tempNewPin = "";
+    updateDots();
+    document.getElementById('lockTitle').innerText = "أدخل رمز PIN";
+    document.getElementById('lockDesc').innerText = "لفتح ومتابعة محفظتك المالية";
+    document.getElementById('cancelChangeBtn').style.display = "none";
+    document.getElementById('lockScreen').style.display = "flex";
+  }
+
+  function setupNumpadListeners() {
+    const buttons = document.querySelectorAll('.num-btn[data-key]');
+    buttons.forEach(btn => {
+      const key = btn.getAttribute('data-key');
+      const handlePress = (e) => {
+        e.preventDefault();
+        pressKey(key);
+      };
+      btn.addEventListener('touchend', handlePress, { passive: false });
+      btn.addEventListener('click', (e) => {
+        if (e.pointerType !== 'touch') pressKey(key);
+      });
+    });
+
+    const delBtn = document.getElementById('deleteKeyBtn');
+    if (delBtn) {
+      delBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        deleteKey();
+      }, { passive: false });
+      delBtn.addEventListener('click', (e) => {
+        if (e.pointerType !== 'touch') deleteKey();
+      });
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (document.getElementById('lockScreen').style.display !== 'none') {
+      if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+      else if (e.key === 'Backspace') deleteKey();
+    }
+  });
+
+  // ==========================================
+  // المنطق المالي والاتصال بالشيت
+  // ==========================================
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwA4Mnxrz8cTM6Kh8Zt21oeIP0YzkhJo69QCSHrWY6pcR5YX8rYAknOC9WUayI05urp/exec";
+  const API_TOKEN = "";
+
+  function cleanNumber(val) {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    const str = String(val).replace(/[^\d.-]/g, '').replace(/٫/g, '.');
+    const n = parseFloat(str);
+    return isNaN(n) ? 0 : n;
+  }
+
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function txMonthKey(d) {
+    const s = String(d || '').trim();
+    let m = s.match(/^(\d{4})[-\/](\d{1,2})/);
+    if (m) return m[1] + '-' + m[2].padStart(2, '0');
+    m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    if (m) return m[3] + '-' + m[2].padStart(2, '0');
+    const dt = new Date(s);
+    return isNaN(dt) ? '' : dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+  }
+  const curMonthKey = () => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); };
+  const monthTxs = () => (appState.recent || []).filter(t => txMonthKey(t.date) === curMonthKey());
+
+  function applyTheme() {
+    const t = safeStorage.getItem('theme') || 'auto';
+    const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', dark ? '#0e0c0a' : '#f5f0e6');
+  }
+  function setTheme(v) { safeStorage.setItem('theme', v); applyTheme(); }
+
+  let hiddenAt = 0, failCount = 0, lockUntil = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    const m = parseInt(safeStorage.getItem('autolock') || '1', 10);
+    if (m > 0 && hiddenAt && Date.now() - hiddenAt > m * 60000 && safeStorage.getItem('app_user_pin')) lockApp();
+    flushQueue();
+  });
+  function wrongPin() {
+    failCount++;
+    if (failCount >= 5) {
+      lockUntil = Date.now() + 30000 * Math.min(failCount - 4, 6);
+      showToast('محاولات كثيرة، انتظر ' + Math.round((lockUntil - Date.now()) / 1000) + ' ثانية 🔒');
+    } else {
+      showToast('رمز PIN غير صحيح ❌ (متبقي ' + (5 - failCount) + ' محاولات)');
+    }
+  }
+
+  function saveCache() {
+    try {
+      safeStorage.setItem('fin_cache', JSON.stringify({
+        a: appState.accounts,
+        r: (appState.recent || []).slice(0, 300),
+        c: appState.categories,
+        p: appState.paymentMethods,
+        debts: appState.debts,
+        reminders: appState.reminders
+      }));
+    } catch (e) {}
+  }
+  function loadCache() {
+    try {
+      const d = JSON.parse(safeStorage.getItem('fin_cache') || 'null');
+      if (!d) return;
+      appState.accounts = d.a || appState.accounts;
+      appState.recent = d.r || appState.recent;
+      appState.categories = d.c || appState.categories;
+      appState.paymentMethods = d.p || appState.paymentMethods;
+      appState.debts = d.debts || appState.debts;
+      appState.reminders = d.reminders || appState.reminders;
+    } catch (e) {}
+  }
+
+  function setConnectionState(state, label) {
+    const el = document.getElementById('connectionState');
+    const txt = document.getElementById('connectionLabel');
+    if (!el || !txt) return;
+    el.classList.remove('online', 'offline');
+    if (state === 'online') el.classList.add('online');
+    if (state === 'offline') el.classList.add('offline');
+    txt.textContent = label;
+  }
+  window.addEventListener('online', () => { setConnectionState('online', 'الاتصال متاح'); flushQueue(); });
+  window.addEventListener('offline', () => setConnectionState('offline', 'غير متصل'));
+
+  function makeRequest(body) {
+    const params = new URLSearchParams(body);
+    if (!params.get('requestId')) {
+      const id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('req-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+      params.set('requestId', id);
+    }
+    return params.toString();
+  }
+
+  // إرسال موثوق عبر JSONP + POST احتياطي لضمان وصول البيانات للشيت 100%
+  function sendTx(body) {
+    return new Promise((resolve, reject) => {
+      if (!SCRIPT_URL || SCRIPT_URL.indexOf('PASTE_NEW_') === 0) return reject(new Error('ضع رابط Apps Script أولاً'));
+      if (!navigator.onLine) return reject(new Error('الجهاز غير متصل بالإنترنت'));
+      const params = new URLSearchParams(body);
+      if (API_TOKEN) params.set('token', API_TOKEN);
+      const callback = '__mfWrite_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      params.set('callback', callback);
+      params.set('_', String(Date.now()));
+      const script = document.createElement('script');
+      let settled = false;
+      const finish = (err, data) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        script.remove();
+        try { delete window[callback]; } catch (_) { window[callback] = undefined; }
+        if (err) reject(err); else resolve(data);
+      };
+      window[callback] = data => {
+        if (!data || data.status !== 'success') {
+          const apiError = new Error((data && data.message) || 'رفض الشيت تنفيذ العملية');
+          apiError.apiError = true;
+          return finish(apiError);
+        }
+        finish(null, data);
+      };
+      script.onerror = () => finish(new Error('تعذر الوصول إلى Google Apps Script'));
+      const timer = setTimeout(() => finish(new Error('انتهت مهلة انتظار رد الشيت؛ ستُعاد المحاولة بنفس رقم الطلب')), 15000);
+      script.src = SCRIPT_URL + '?' + params.toString();
+      script.async = true;
+      document.body.appendChild(script);
+    });
+  }
+
+  function getQueue() {
+    try {
+      const raw = JSON.parse(safeStorage.getItem('tx_queue') || '[]');
+      if (!Array.isArray(raw)) return [];
+      const normalized = raw.filter(x => typeof x === 'string').map(makeRequest);
+      if (JSON.stringify(raw) !== JSON.stringify(normalized)) safeStorage.setItem('tx_queue', JSON.stringify(normalized));
+      return normalized;
+    } catch (e) { return []; }
+  }
+  function setQueue(q) { safeStorage.setItem('tx_queue', JSON.stringify(q)); updateQueueUI(); }
+  function updateQueueUI() { const el = document.getElementById('queueInfo'); if (el) el.innerText = getQueue().length + ' طلب بانتظار التأكيد'; }
+  function queueTx(body) {
+    const q = getQueue();
+    const id = new URLSearchParams(body).get('requestId');
+    if (!id || !q.some(x => new URLSearchParams(x).get('requestId') === id)) q.push(body);
+    setQueue(q.slice(-300));
+    showToast('لم يصل تأكيد من الشيت؛ حُفظ الطلب لإعادة المحاولة بأمان 📥');
+  }
+  async function sendOrQueue(body) {
+    const request = makeRequest(body);
+    try { await sendTx(request); return { ok: true, request }; }
+    catch (e) {
+      if (e && e.apiError) return { ok: false, permanent: true, request, error: e };
+      queueTx(request); setConnectionState('offline', 'طلبات بانتظار التأكيد');
+      return { ok: false, request, error: e };
+    }
+  }
+  async function flushQueue() {
+    const q = getQueue();
+    if (!q.length || !navigator.onLine) { if (!navigator.onLine) setConnectionState('offline', 'غير متصل'); return; }
+    const left = [];
+    for (let i = 0; i < q.length; i++) {
+      try { await sendTx(q[i]); }
+      catch (e) {
+        if (e && e.apiError) { showToast('رفض الشيت طلباً معلّقاً: ' + e.message); continue; }
+        left.push(...q.slice(i)); break;
+      }
+    }
+    setQueue(left);
+    if (left.length < q.length) { showToast('تم تأكيد الطلبات المعلّقة؛ جارٍ تحديث البيانات'); setTimeout(fetchData, 700); }
+    setConnectionState(left.length ? 'offline' : 'online', left.length ? 'طلبات معلّقة' : 'متصل بالشيت');
+  }
+
+  let appState = {
+    accounts: [
+      { name: "كاش", current: 4779.00 },
+      { name: "المشرق نيو", current: 697.73 },
+      { name: "المشرق ادخار", current: 25078.36 },
+      { name: "اتصالات كاش", current: 757.20 },
+      { name: "ميزة", current: 915.60 },
+      { name: "ايزي باي", current: 0.00 },
+      { name: "اخرى", current: 0.00 }
+    ],
+    categories: {
+      expense: ["مأكولات ومشروبات", "مواصلات وبنزين", "تسوق ومستلزمات", "فواتير شهرية", "صحة وأدوية", "ترفيه وخروجات", "أخرى", "طباعة وتصميمات", "تبرعات"],
+      income: ["راتب شهري", "تصميم", "أخرى"]
+    },
+    paymentMethods: ["كاش", "المشرق نيو", "المشرق ادخار", "اتصالات كاش", "ميزة", "ايزي باي", "اخرى"],
+    recent: [],
+    debts: [],
+    reminders: [],
+    currentType: 'صرف',
+    unmaskedCards: {},
+    overviewUnmasked: { expense: false, income: false },
+    historyFilter: 'all',
+    debtFilter: 'all'
+  };
+
+  let isGlobalVisible = false;
+
+  function localDateKey(date = new Date()) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  const now = new Date();
+  document.getElementById('txDate').value = localDateKey(now);
+  document.getElementById('debtDate').value = localDateKey(now);
+  document.getElementById('remDueDate').value = localDateKey(now);
+  document.getElementById('todayDateTxt').innerText = now.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  // ==========================================
+  // القائمة الجانبية وتبديل الشاشات
+  // ==========================================
+  function openDrawer() {
+    document.getElementById('sideDrawer').classList.add('open');
+    document.getElementById('drawerBackdrop').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('sideDrawer').classList.remove('open');
+    document.getElementById('drawerBackdrop').classList.remove('open');
+  }
+  (function initDrawerGestures() {
+    let startX = 0;
+    const drawer = document.getElementById('sideDrawer');
+    if (!drawer) return;
+    drawer.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    drawer.addEventListener('touchend', e => {
+      const diff = e.changedTouches[0].clientX - startX;
+      if (diff > 65) closeDrawer();
+    }, { passive: true });
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeDrawer();
+    });
+  })();
+
+  function switchNavTab(tabName) {
+    closeDrawer();
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.drawer-item').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-tab') === tabName);
+    });
+
+    const tabMap = {
+      'home': { id: 'tabHome', title: 'الرئيسية' },
+      'add': { id: 'tabAdd', title: 'الإضافة' },
+      'debts': { id: 'tabDebts', title: 'المستحقات' },
+      'reminders': { id: 'tabReminders', title: 'التنبيهات' },
+      'history': { id: 'tabHistory', title: 'السجل' },
+      'stats': { id: 'tabStats', title: 'التحليلات والمصروفات' },
+      'settings': { id: 'tabSettings', title: 'الإعدادات' }
+    };
+
+    const target = tabMap[tabName] || tabMap['home'];
+    document.getElementById(target.id).classList.add('active');
+    document.getElementById('screenHeading').innerText = target.title;
+
+    const fab = document.getElementById('fabAddBtn');
+    if (fab) fab.classList.toggle('hidden', tabName === 'add');
+
+    if (tabName === 'debts') renderDebts();
+    if (tabName === 'reminders') renderReminders();
+    if (tabName === 'stats') renderAnalytics();
+    if (tabName === 'history') filterHistoryList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ==========================================
+  // إدارة التصنيفات وإضافة تصنيف جديد للشيت
+  // ==========================================
+  function switchType(type) {
+    appState.currentType = type;
+    document.getElementById('txType').value = type;
+
+    const bExp = document.getElementById('btnExp');
+    const bInc = document.getElementById('btnInc');
+    const bTra = document.getElementById('btnTra');
+
+    bExp.className = 'type-btn';
+    bInc.className = 'type-btn';
+    bTra.className = 'type-btn';
+
+    const catGroup = document.getElementById('catGroup');
+    const toGroup = document.getElementById('toGroup');
+    const fromLabel = document.getElementById('fromLabel');
+    toggleNewCategoryBox(false);
+
+    if (type === 'صرف') {
+      bExp.classList.add('active-exp');
+      catGroup.style.display = 'flex';
+      toGroup.style.display = 'none';
+      fromLabel.innerText = 'طريقة الدفع';
+      populateCategories(appState.categories.expense);
+    } else if (type === 'قبض') {
+      bInc.classList.add('active-inc');
+      catGroup.style.display = 'flex';
+      toGroup.style.display = 'none';
+      fromLabel.innerText = 'إيداع إلى';
+      populateCategories(appState.categories.income);
+    } else if (type === 'تحويل بين حسابات') {
+      bTra.classList.add('active-tra');
+      catGroup.style.display = 'none';
+      toGroup.style.display = 'flex';
+      fromLabel.innerText = 'من حساب';
+    }
+  }
+
+  function populateCategories(list, selectedValue) {
+    const s = document.getElementById('txCat');
+    const items = list || [];
+    s.innerHTML = items.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('') +
+      `<option value="__ADD_NEW__">+ إضافة تصنيف جديد...</option>`;
+    if (selectedValue && items.includes(selectedValue)) {
+      s.value = selectedValue;
+    } else if (items.length > 0) {
+      s.value = items[0];
+    }
+  }
+
+  function handleCategorySelectChange(sel) {
+    if (sel.value === '__ADD_NEW__') {
+      const list = appState.currentType === 'قبض' ? appState.categories.income : appState.categories.expense;
+      sel.value = (list && list[0]) ? list[0] : '';
+      toggleNewCategoryBox(true);
+    }
+  }
+
+  function toggleNewCategoryBox(forceState) {
+    const box = document.getElementById('newCatBox');
+    const input = document.getElementById('newCatInput');
+    const lbl = document.getElementById('newCatLabel');
+    const isOpen = typeof forceState === 'boolean' ? forceState : !box.classList.contains('open');
+    if (isOpen) {
+      const typeLabel = appState.currentType === 'قبض' ? 'قبض' : 'صرف';
+      lbl.innerText = `إضافة تصنيف (${typeLabel}) جديد إلى الشيت`;
+      box.classList.add('open');
+      input.value = '';
+      setTimeout(() => input.focus(), 60);
+    } else {
+      box.classList.remove('open');
+      input.value = '';
+    }
+  }
+
+  async function submitNewCategory() {
+    const input = document.getElementById('newCatInput');
+    const btn = document.getElementById('saveNewCatBtn');
+    const name = String(input.value || '').trim();
+    if (!name) {
+      showToast('اكتب اسم التصنيف الجديد أولاً ⚠️');
+      input.focus();
+      return;
+    }
+
+    const catType = appState.currentType === 'قبض' ? 'قبض' : 'صرف';
+    const targetArr = catType === 'قبض' ? appState.categories.income : appState.categories.expense;
+
+    if (targetArr.some(c => c.trim() === name)) {
+      populateCategories(targetArr, name);
+      toggleNewCategoryBox(false);
+      showToast('التصنيف موجود بالفعل وتم اختياره ✓');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = '...';
+
+    // إضافة فورية محلياً واختياره في القائمة
+    targetArr.push(name);
+    populateCategories(targetArr, name);
+    saveCache();
+    toggleNewCategoryBox(false);
+    showToast(`تمت إضافة تصنيف "${name}"؛ جارٍ الحفظ في الشيت...`);
+
+    const params = new URLSearchParams({
+      action: 'add_category',
+      catType: catType,
+      categoryName: name
+    });
+
+    try {
+      const res = await sendOrQueue(params.toString());
+      if (res.ok) {
+        showToast(`تم حفظ تصنيف "${name}" في الشيت بنجاح ✅`);
+        setTimeout(fetchData, 600);
+      } else if (res.permanent) {
+        // التراجع إذا رفض الشيت
+        const idx = targetArr.indexOf(name);
+        if (idx !== -1) targetArr.splice(idx, 1);
+        populateCategories(targetArr);
+        saveCache();
+        showToast('رفض الشيت إضافة التصنيف: ' + res.error.message);
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'حفظ';
+    }
+  }
+
+  function bumpAmount(n) {
+    const input = document.getElementById('txAmount');
+    input.value = (parseFloat(input.value || 0) + n).toFixed(2);
+  }
+
+  // ==========================================
+  // إخفاء / إظهار الأرصدة (كارت إجمالي الأرصدة فقط للتحكم بالكل)
+  // ==========================================
+  function toggleCardPrivacy(idx) {
+    appState.unmaskedCards[idx] = !appState.unmaskedCards[idx];
+    renderCards();
+  }
+
+  function toggleOverviewPrivacy(type) {
+    appState.overviewUnmasked[type] = !appState.overviewUnmasked[type];
+    renderMonthlyOverview();
+  }
+
+  function toggleGlobalPrivacy() {
+    isGlobalVisible = !isGlobalVisible;
+    appState.accounts.forEach((_, idx) => {
+      appState.unmaskedCards[idx] = isGlobalVisible;
+    });
+    appState.overviewUnmasked.expense = isGlobalVisible;
+    appState.overviewUnmasked.income = isGlobalVisible;
+    renderCards();
+    renderMonthlyOverview();
+    renderTotal();
+  }
+
+  function renderTotal() {
+    const el = document.getElementById('totalBal');
+    if (!el) return;
+    const total = appState.accounts.reduce((s, a) => s + cleanNumber(a.current), 0);
+    let e = 0, i = 0;
+    monthTxs().forEach(t => {
+      const a = cleanNumber(t.amount);
+      if (t.type === 'صرف') e += a;
+      else if (t.type === 'قبض' || t.type === 'دخل') i += a;
+    });
+    if (isGlobalVisible) {
+      el.innerHTML = `${fmt(total)} <span class="hero-curr-tag">ج.م</span>`;
+    } else {
+      el.innerHTML = `<span class="hero-masked-dots">•••• ••••</span>`;
+    }
+    const eyeTxt = document.getElementById('heroEyeText');
+    if (eyeTxt) eyeTxt.innerText = isGlobalVisible ? 'إخفاء' : 'إظهار';
+
+    const accCountEl = document.getElementById('heroAccCount');
+    if (accCountEl) accCountEl.innerText = `المحافظ: ${appState.accounts.length} حسابات`;
+
+    const netEl = document.getElementById('monthNet');
+    if (netEl) {
+      netEl.innerText = isGlobalVisible
+        ? 'صافي الشهر: ' + (i - e > 0 ? '+' : '') + fmt(i - e) + ' ج.م'
+        : 'اضغط للكشف السريع';
+    }
+  }
+
+  function renderCards() {
+    renderTotal();
+    const grid = document.getElementById('accountsGrid');
+    grid.innerHTML = appState.accounts.map((acc, idx) => {
+      const val = cleanNumber(acc.current);
+      const isVisible = isGlobalVisible || appState.unmaskedCards[idx];
+      const isNegative = val < 0;
+
+      let displayValue = '';
+      if (!isVisible) {
+        displayValue = `<span class="acc-value is-masked">••••••</span>`;
+      } else {
+        const formatted = Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        displayValue = `
+          <span class="acc-value ${isNegative ? 'is-negative' : ''}">
+            ${isNegative ? '-' : ''}${formatted} <span class="acc-cur">ج.م</span>
+          </span>
+        `;
+      }
+
+      return `
+        <div class="acc-card ${isNegative ? 'is-negative' : ''}" onclick="toggleCardPrivacy(${idx})">
+          <div class="acc-top">
+            <span class="acc-name">${esc(acc.name)}</span>
+            <span class="acc-status-dot"></span>
+          </div>
+          ${displayValue}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderMonthlyOverview() {
+    renderTotal();
+    let expSum = 0;
+    let incSum = 0;
+
+    monthTxs().forEach(t => {
+      const amt = cleanNumber(t.amount);
+      if (t.type === 'صرف') expSum += amt;
+      else if (t.type === 'قبض' || t.type === 'دخل') incSum += amt;
+    });
+
+    const expVisible = isGlobalVisible || appState.overviewUnmasked.expense;
+    const incVisible = isGlobalVisible || appState.overviewUnmasked.income;
+
+    const expEl = document.getElementById('monthExpenseVal');
+    const incEl = document.getElementById('monthIncomeVal');
+
+    if (expVisible) {
+      expEl.innerHTML = expSum.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' ج.م';
+    } else {
+      expEl.innerHTML = '<span class="stat-value is-masked">••••••</span>';
+    }
+
+    if (incVisible) {
+      incEl.innerHTML = incSum.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' ج.م';
+    } else {
+      incEl.innerHTML = '<span class="stat-value is-masked">••••••</span>';
+    }
+  }
+
+  function renderRecentHome() {
+    const container = document.getElementById('homeRecentTxList');
+    const validTxs = (appState.recent || []).filter(t => cleanNumber(t.amount) > 0 && t.type && t.type !== 'النوع').slice(0, 5);
+
+    if (validTxs.length === 0) {
+      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 12px; font-size: 0.82rem;">لا توجد معاملات مسجلة بعد</div>';
+      return;
+    }
+
+    container.innerHTML = validTxs.map(t => createTxRowHtml(t)).join('');
+  }
+
+  function createTxRowHtml(t) {
+    let amtClass = 'amt-exp';
+    let sign = '-';
+    if (t.type === 'قبض' || t.type === 'دخل') {
+      amtClass = 'amt-inc';
+      sign = '+';
+    } else if (t.type === 'تحويل بين حسابات' || t.type === 'تحويل') {
+      amtClass = 'amt-tra';
+      sign = '';
+    }
+
+    const accMeta = (t.type === 'تحويل بين حسابات' || t.type === 'تحويل') ? `${t.fromAcc} ← ${t.toAcc}` : t.fromAcc;
+    const amtVal = cleanNumber(t.amount);
+
+    return `
+      <div class="tx-item" ${t.row ? `onclick="openTx(${t.row})" style="cursor:pointer"` : ''}>
+        <div>
+          <div class="tx-primary">${esc(t.desc || t.category || t.type)}</div>
+          <div class="tx-secondary">${esc(t.category)} • ${esc(accMeta)} • ${esc(t.date)}</div>
+        </div>
+        <div class="tx-left">
+          <span class="tx-amt ${amtClass}">${sign}${amtVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // ==========================================
+  // سجل المعاملات والبحث
+  // ==========================================
+  function setHistoryFilter(type, el) {
+    appState.historyFilter = type;
+    document.querySelectorAll('.filter-chips .f-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    filterHistoryList();
+  }
+
+  function filterHistoryList() {
+    const query = (document.getElementById('txSearchInput').value || '').trim().toLowerCase();
+    const container = document.getElementById('fullHistoryList');
+
+    let filtered = appState.recent.filter(t => cleanNumber(t.amount) > 0 && t.type !== 'النوع');
+
+    if (appState.historyFilter !== 'all') {
+      if (appState.historyFilter === 'تحويل') {
+        filtered = filtered.filter(t => t.type.includes('تحويل'));
+      } else {
+        filtered = filtered.filter(t => t.type === appState.historyFilter);
+      }
+    }
+
+    if (query) {
+      filtered = filtered.filter(t => 
+        String(t.desc || '').toLowerCase().includes(query) ||
+        String(t.category || '').toLowerCase().includes(query) ||
+        String(t.fromAcc || '').toLowerCase().includes(query) ||
+        String(t.toAcc || '').toLowerCase().includes(query)
+      );
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 18px; font-size: 0.85rem;">لا توجد معاملات مطابقة للبحث</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(t => createTxRowHtml(t)).join('');
+  }
+
+  // ==========================================
+  // المستحقات (مدين / داين)
+  // ==========================================
+  function setDebtType(t) {
+    document.getElementById('debtTypeInput').value = t;
+    const bLya = document.getElementById('btnLya');
+    const bAlya = document.getElementById('btnAlya');
+    const lbl = document.getElementById('debtPersonLabel');
+    if (t === 'ليا') {
+      bLya.className = 'type-btn active-inc';
+      bAlya.className = 'type-btn';
+      if (lbl) lbl.innerText = 'اسم المدين';
+    } else {
+      bAlya.className = 'type-btn active-exp';
+      bLya.className = 'type-btn';
+      if (lbl) lbl.innerText = 'اسم الدائن';
+    }
+  }
+
+  function setDebtFilter(filter, el) {
+    appState.debtFilter = filter;
+    el.parentElement.querySelectorAll('.f-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderDebts();
+  }
+
+  const isDebtLya = t => ['ليا', 'مدين (ليا)', 'مدين'].includes(String(t || '').trim());
+  const isDebtAlya = t => ['عليا', 'داين (عليا)', 'داين'].includes(String(t || '').trim());
+
+  function renderDebts() {
+    let lya = 0, alya = 0;
+    (appState.debts || []).forEach(d => {
+      const amt = cleanNumber(d.amount);
+      if (d.status !== 'تم السداد') {
+        if (isDebtLya(d.type)) lya += amt;
+        else if (isDebtAlya(d.type)) alya += amt;
+      }
+    });
+
+    const pendingDebtsCount = (appState.debts || []).filter(d => d.status !== 'تم السداد').length;
+    const debtBadge = document.getElementById('drawerDebtBadge');
+    if (debtBadge) {
+      debtBadge.innerText = pendingDebtsCount;
+      debtBadge.classList.toggle('show', pendingDebtsCount > 0);
+    }
+    const personListEl = document.getElementById('debtPersonList');
+    if (personListEl) {
+      const names = [...new Set((appState.debts || []).map(d => String(d.desc || '').trim()).filter(Boolean))];
+      personListEl.innerHTML = names.map(n => `<option value="${esc(n)}">`).join('');
+    }
+
+    document.getElementById('totalLyaVal').innerText = fmt(lya) + ' ج.م';
+    document.getElementById('totalAlyaVal').innerText = fmt(alya) + ' ج.م';
+    const net = lya - alya;
+    const netEl = document.getElementById('netDebtsVal');
+    netEl.innerText = (net >= 0 ? '+' : '') + fmt(net) + ' ج.م';
+    netEl.className = 'stat-value ' + (net >= 0 ? 'income-val' : 'expense-val');
+
+    let list = appState.debts || [];
+    if (appState.debtFilter === 'مستحق') list = list.filter(d => d.status !== 'تم السداد');
+    else if (appState.debtFilter === 'ليا') list = list.filter(d => isDebtLya(d.type));
+    else if (appState.debtFilter === 'عليا') list = list.filter(d => isDebtAlya(d.type));
+    else if (appState.debtFilter === 'تم السداد') list = list.filter(d => d.status === 'تم السداد');
+
+    const container = document.getElementById('debtsList');
+    if (!list.length) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.85rem;">لا توجد عناصر مطابقة</div>';
+      return;
+    }
+
+    container.innerHTML = list.map(d => {
+      const isLya = isDebtLya(d.type);
+      const isPaid = d.status === 'تم السداد';
+      const badgeClass = isLya ? 'badge-lya' : 'badge-alya';
+      const typeLabel = isLya ? 'مدين (ليا)' : 'داين (عليا)';
+      const statusBadge = isPaid ? '<span class="badge badge-paid">تم السداد</span>' : '<span class="badge badge-due">مستحق</span>';
+
+      return `
+        <div class="tx-item" style="opacity:${isPaid ? '0.6' : '1'};">
+          <div>
+            <div class="tx-primary">
+              <span class="badge ${badgeClass}" style="margin-left:4px;">${typeLabel}</span>
+              ${esc(d.desc)}
+            </div>
+            <div class="tx-secondary">${statusBadge} • ${esc(d.date)}</div>
+          </div>
+          <div class="tx-left" style="display:flex;align-items:center;gap:8px;">
+            <span class="tx-amt ${isLya ? 'amt-inc' : 'amt-exp'}">${fmt(d.amount)}</span>
+            <button type="button" class="btn-secondary" style="padding:4px 8px;font-size:0.75rem;" onclick="toggleDebtStatus('${esc(d.id || d.row)}', '${isPaid ? 'مستحق' : 'تم السداد'}')">
+              ${isPaid ? 'إعادة فتح' : 'سداد ✓'}
+            </button>
+            <button type="button" class="btn-secondary" style="padding:4px 6px;color:var(--expense);font-size:0.75rem;" onclick="deleteDebtItem('${esc(d.id || d.row)}')">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function handleDebtSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('debtSubmitBtn');
+    btn.disabled = true;
+    btn.innerText = 'جاري الحفظ في الشيت...';
+
+    const type = document.getElementById('debtTypeInput').value;
+    const desc = document.getElementById('debtDesc').value;
+    const amount = parseFloat(document.getElementById('debtAmount').value);
+    if (!(amount > 0) || !Number.isFinite(amount)) {
+      showToast('أدخل مبلغ مستحق صحيحاً');
+      btn.disabled = false;
+      btn.innerText = 'حفظ المستحق في الشيت';
+      return;
+    }
+    const date = document.getElementById('debtDate').value;
+
+    const newObj = {
+      row: (appState.debts.length ? Math.max(...appState.debts.map(x => x.row || 0)) + 1 : 2),
+      id: 'D-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      date, type, desc, amount, status: 'مستحق', notes: ''
+    };
+
+    appState.debts.unshift(newObj);
+    renderDebts();
+    saveCache();
+    showToast('تمت إضافة المستحق؛ جارٍ تأكيد الحفظ في الشيت 📋');
+
+    document.getElementById('debtDesc').value = '';
+    document.getElementById('debtAmount').value = '';
+
+    const params = new URLSearchParams({
+      action: 'add_debt',
+      id: newObj.id,
+      date, type, desc, amount, status: 'مستحق', notes: ''
+    });
+
+    try {
+      const result = await sendOrQueue(params.toString());
+      if (result.ok) setTimeout(fetchData, 500);
+      else if (result.permanent) {
+        appState.debts = appState.debts.filter(d => d.id !== newObj.id);
+        renderDebts();
+        saveCache();
+        showToast('الشيت رفض إضافة المستحق: ' + result.error.message);
+      } else {
+        showToast('المستحق محفوظ محلياً وينتظر تأكيد الشيت');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'حفظ المستحق في الشيت';
+    }
+  }
+
+  async function toggleDebtStatus(identifier, newStatus) {
+    const item = appState.debts.find(d => String(d.id) === String(identifier) || String(d.row) === String(identifier));
+    if (!item) return;
+    const params = new URLSearchParams({ action: 'update_debt_status', id: item.id || '', row: item.id ? '' : item.row, status: newStatus });
+    const result = await sendOrQueue(params.toString());
+    if (result.ok) {
+      item.status = newStatus;
+      renderDebts();
+      saveCache();
+      showToast(newStatus === 'تم السداد' ? 'تم تأكيد سداد المستحق ✓' : 'تمت إعادة فتح المستحق');
+      setTimeout(fetchData, 500);
+    } else if (result.permanent) {
+      showToast('الشيت رفض تغيير الحالة: ' + result.error.message);
+    } else {
+      showToast('تغيير الحالة ينتظر تأكيد الشيت');
+    }
+  }
+
+  async function deleteDebtItem(identifier) {
+    if (!confirm('حذف هذا المستحق نهائياً؟')) return;
+    const item = appState.debts.find(d => String(d.id) === String(identifier) || String(d.row) === String(identifier));
+    if (!item) return;
+    const params = new URLSearchParams({ action: 'delete_debt', id: item.id || '', row: item.id ? '' : item.row });
+    const result = await sendOrQueue(params.toString());
+    if (result.ok) {
+      appState.debts = appState.debts.filter(d => d !== item);
+      renderDebts();
+      saveCache();
+      showToast('تم حذف المستحق من الشيت');
+      setTimeout(fetchData, 500);
+    } else if (result.permanent) {
+      showToast('الشيت رفض حذف المستحق: ' + result.error.message);
+    } else {
+      showToast('الحذف ينتظر تأكيد الشيت');
+    }
+  }
+
+  // ==========================================
+  // التنبيهات والالتزامات
+  // ==========================================
+  function renderReminders() {
+    let upcomingCount = 0;
+    let upcomingSum = 0;
+    const today = localDateKey();
+
+    const sorted = [...(appState.reminders || [])].sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+
+    sorted.forEach(r => {
+      if (r.status !== 'تم الدفع') {
+        upcomingCount++;
+        upcomingSum += cleanNumber(r.amount);
+      }
+    });
+
+    const remBadge = document.getElementById('drawerRemBadge');
+    if (remBadge) {
+      remBadge.innerText = upcomingCount;
+      remBadge.classList.toggle('show', upcomingCount > 0);
+    }
+    document.getElementById('upcomingRemCount').innerText = upcomingCount + ' التزام';
+    document.getElementById('upcomingRemSum').innerText = fmt(upcomingSum) + ' ج.م';
+
+    const container = document.getElementById('remindersList');
+    if (!sorted.length) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.85rem;">لا توجد تنبيهات مسجلة بعد</div>';
+      return;
+    }
+
+    container.innerHTML = sorted.map(r => {
+      const isPaid = r.status === 'تم الدفع';
+      const dueParts = String(r.dueDate || '').split('-').map(Number);
+      const todayParts = today.split('-').map(Number);
+      const dueUtc = Date.UTC(dueParts[0], (dueParts[1] || 1) - 1, dueParts[2] || 1);
+      const todayUtc = Date.UTC(todayParts[0], todayParts[1] - 1, todayParts[2]);
+      let dueDiffDays = Number.isFinite(dueUtc) ? Math.round((dueUtc - todayUtc) / 86400000) : 0;
+      let badgeHtml = '';
+      if (isPaid) {
+        badgeHtml = '<span class="badge badge-paid">تم الدفع</span>';
+      } else if (dueDiffDays < 0) {
+        badgeHtml = `<span class="badge badge-overdue">متأخر (${Math.abs(dueDiffDays)} يوم)</span>`;
+      } else if (dueDiffDays === 0) {
+        badgeHtml = '<span class="badge badge-overdue">موعده اليوم!</span>';
+      } else {
+        badgeHtml = `<span class="badge badge-due">باقي ${dueDiffDays} يوم</span>`;
+      }
+
+      return `
+        <div class="tx-item" style="opacity:${isPaid ? '0.6' : '1'};">
+          <div>
+            <div class="tx-primary">${esc(r.desc)}</div>
+            <div class="tx-secondary">${badgeHtml} • استحقاق: ${esc(r.dueDate)} • تكرار: ${esc(r.repeat || 'شهري')}</div>
+          </div>
+          <div class="tx-left" style="display:flex;align-items:center;gap:6px;">
+            <span class="tx-amt amt-exp">${fmt(r.amount)}</span>
+            ${!isPaid ? `<button type="button" class="btn-secondary" style="padding:4px 8px;background:var(--income-bg);color:var(--income);border-color:var(--income);font-size:0.75rem;" onclick="payReminderNow('${encodeURIComponent(String(r.id ?? r.row ?? '')).replace(/'/g,'%27')}', decodeURIComponent('${encodeURIComponent(String(r.desc || '')).replace(/'/g,'%27')}'), ${cleanNumber(r.amount)})">تسجيل الدفع</button>` : ''}
+            <button type="button" class="btn-secondary" style="padding:4px 6px;color:var(--expense);font-size:0.75rem;" onclick="deleteReminderItem('${esc(r.id || r.row)}')">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function handleReminderSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('remSubmitBtn');
+    btn.disabled = true;
+    btn.innerText = 'جاري الحفظ في الشيت...';
+
+    const desc = document.getElementById('remDesc').value;
+    const amount = parseFloat(document.getElementById('remAmount').value);
+    if (!(amount > 0) || !Number.isFinite(amount)) {
+      showToast('أدخل مبلغ التزام صحيحاً');
+      btn.disabled = false;
+      btn.innerText = 'حفظ التنبيه في الشيت';
+      return;
+    }
+    const dueDate = document.getElementById('remDueDate').value;
+    const repeat = document.getElementById('remRepeat').value;
+    const notes = document.getElementById('remNotes').value;
+
+    const newObj = {
+      row: (appState.reminders.length ? Math.max(...appState.reminders.map(x => x.row || 0)) + 1 : 2),
+      id: 'R-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      dueDate, desc, amount, repeat, status: 'قادم', notes
+    };
+
+    appState.reminders.push(newObj);
+    renderReminders();
+    saveCache();
+    showToast('تمت إضافة التنبيه؛ جارٍ تأكيد الحفظ في الشيت 🔔');
+
+    document.getElementById('remDesc').value = '';
+    document.getElementById('remAmount').value = '';
+    document.getElementById('remNotes').value = '';
+
+    const params = new URLSearchParams({
+      action: 'add_reminder',
+      id: newObj.id,
+      dueDate, desc, amount, repeat, status: 'قادم', notes
+    });
+
+    try {
+      const result = await sendOrQueue(params.toString());
+      if (result.ok) setTimeout(fetchData, 500);
+      else if (result.permanent) {
+        appState.reminders = appState.reminders.filter(r => r.id !== newObj.id);
+        renderReminders();
+        saveCache();
+        showToast('الشيت رفض إضافة التنبيه: ' + result.error.message);
+      } else {
+        showToast('التنبيه محفوظ محلياً وينتظر تأكيد الشيت');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'حفظ التنبيه في الشيت';
+    }
+  }
+
+  let pendingReminderPayment = null;
+  function payReminderNow(row, desc, amount) {
+    switchNavTab('add');
+    switchType('صرف');
+    document.getElementById('txAmount').value = Number(amount || 0).toFixed(2);
+    document.getElementById('txDesc').value = desc;
+    pendingReminderPayment = { row: decodeURIComponent(String(row)), desc: String(desc), amount: Number(amount || 0) };
+    showToast('تم تجهيز المصروف؛ اختر الحساب ثم اضغط تسجيل الحركة');
+  }
+
+  async function deleteReminderItem(identifier) {
+    if (!confirm('حذف هذا التنبيه نهائياً؟')) return;
+    const item = appState.reminders.find(r => String(r.id) === String(identifier) || String(r.row) === String(identifier));
+    if (!item) return;
+    const params = new URLSearchParams({ action: 'delete_reminder', id: item.id || '', row: item.id ? '' : item.row });
+    const result = await sendOrQueue(params.toString());
+    if (result.ok) {
+      appState.reminders = appState.reminders.filter(r => r !== item);
+      renderReminders();
+      saveCache();
+      showToast('تم حذف التنبيه من الشيت');
+      setTimeout(fetchData, 500);
+    } else if (result.permanent) {
+      showToast('الشيت رفض حذف التنبيه: ' + result.error.message);
+    } else {
+      showToast('الحذف ينتظر تأكيد الشيت');
+    }
+  }
+
+  // ==========================================
+  // إحصائيات المصروفات والميزانيات
+  // ==========================================
+  function getBudgets() { try { return JSON.parse(safeStorage.getItem('budgets') || '{}'); } catch (e) { return {}; } }
+  function setBudget(i) {
+    const cat = (window._cats || [])[i]; if (!cat) return;
+    const b = getBudgets();
+    const v = prompt('الميزانية الشهرية لـ «' + cat + '» بالجنيه (اتركها فارغة لحذفها)', b[cat] || '');
+    if (v === null) return;
+    const n = cleanNumber(v);
+    if (n > 0) b[cat] = n; else delete b[cat];
+    safeStorage.setItem('budgets', JSON.stringify(b));
+    renderAnalytics();
+  }
+
+  function renderAnalytics() {
+    const container = document.getElementById('categoryBreakdownContainer');
+    const catMap = {};
+    let totalExp = 0;
+    monthTxs().forEach(t => {
+      if (t.type === 'صرف') {
+        const amt = cleanNumber(t.amount), cat = t.category || 'أخرى';
+        catMap[cat] = (catMap[cat] || 0) + amt;
+        totalExp += amt;
+      }
+    });
+    const budgets = getBudgets();
+    Object.keys(budgets).forEach(c => { if (!(c in catMap)) catMap[c] = 0; });
+    const cats = Object.entries(catMap).sort((x, y) => y[1] - x[1]);
+    window._cats = cats.map(x => x[0]);
+
+    const now = new Date();
+    const daysElapsed = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    document.getElementById('topExpenseCat').innerText = totalExp > 0 ? cats[0][0] : 'لا يوجد';
+    document.getElementById('dailyAvgExpense').innerText = fmt(totalExp / daysElapsed) + ' ج.م';
+
+    if (!cats.length) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px;">لا توجد مصروفات هذا الشهر بعد</div>';
+      return;
+    }
+    const hint = `<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;">المتوقع آخر الشهر بنفس المعدل: <b style="direction:ltr;display:inline-block;">${fmt(totalExp / daysElapsed * daysInMonth)} ج.م</b><br>اضغط على أي تصنيف لتحديد ميزانيته الشهرية</div>`;
+    container.innerHTML = hint + cats.map(([cat, amt], i) => {
+      const bud = budgets[cat];
+      const base = bud || totalExp;
+      const pct = base ? Math.round(amt / base * 100) : 0;
+      const col = bud ? (pct >= 100 ? 'var(--expense)' : pct >= 80 ? '#f59e0b' : 'var(--income)') : 'var(--primary-accent)';
+      const sub = bud ? `${fmt(amt)} / ${fmt(bud)} ج.م (${pct}%)` : `${fmt(amt)} ج.م (${pct}%)`;
+      return `
+        <div class="cat-bar-item" onclick="setBudget(${i})">
+          <div class="cat-bar-header"><span>${esc(cat)}</span><span style="direction:ltr;">${sub}</span></div>
+          <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${Math.min(pct, 100)}%;background:${col};"></div></div>
+        </div>`;
+    }).join('');
+  }
+
+  // ==========================================
+  // تعديل وحذف المعاملات العادية
+  // ==========================================
+  let editRow = 0, editFp = '', selTx = null;
+  const txFp = t => [String(t.type || '').trim(), cleanNumber(t.amount), String(t.desc || '').trim()].join('|');
+
+  function openTx(row) {
+    selTx = appState.recent.find(t => String(t.row) === String(row));
+    if (!selTx) return;
+    document.getElementById('txModalBody').innerHTML = `<div class="tx-primary" style="font-size:1.05rem;">${esc(selTx.desc || selTx.category)}</div>
+      <div class="tx-secondary" style="margin-top:6px;line-height:1.7;">${esc(selTx.type)} • ${esc(selTx.category)} • ${esc(selTx.fromAcc)}${selTx.toAcc ? ' ← ' + esc(selTx.toAcc) : ''}<br>${esc(selTx.date)} • ${fmt(cleanNumber(selTx.amount))} ج.م</div>`;
+    document.getElementById('txModal').style.display = 'flex';
+  }
+  function closeTx() { document.getElementById('txModal').style.display = 'none'; }
+
+  async function mutate(p) {
+    const result = await sendOrQueue(p.toString());
+    if (result.ok) { showToast('تم تأكيد التعديل في الشيت'); setTimeout(fetchData, 500); }
+    else if (result.permanent) showToast('الشيت رفض التعديل: ' + result.error.message);
+    else showToast('التعديل محفوظ في قائمة الانتظار ولم يُؤكد بعد');
+  }
+  function deleteTx() {
+    if (!selTx || !confirm('حذف هذه الحركة من الشيت نهائياً؟')) return;
+    const p = new URLSearchParams({ action: 'delete', row: selTx.row, fp: txFp(selTx) });
+    closeTx(); mutate(p);
+  }
+  function startEdit() {
+    const t = selTx; if (!t) return;
+    closeTx(); editRow = t.row; editFp = txFp(t);
+    switchNavTab('add'); switchType(t.type);
+    document.getElementById('fromAcc').value = t.fromAcc;
+    if (t.toAcc) document.getElementById('toAcc').value = t.toAcc;
+    if (t.type !== 'تحويل بين حسابات') document.getElementById('txCat').value = t.category;
+    document.getElementById('txDesc').value = t.desc;
+    document.getElementById('txAmount').value = cleanNumber(t.amount).toFixed(2);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(t.date)) document.getElementById('txDate').value = t.date;
+    document.getElementById('submitBtn').innerText = 'حفظ التعديل في الشيت';
+    document.getElementById('cancelEditBtn').style.display = 'block';
+    document.getElementById('screenHeading').innerText = 'تعديل حركة';
+  }
+  function cancelEdit() {
+    editRow = 0; editFp = '';
+    document.getElementById('submitBtn').innerText = 'تسجيل الحركة في الشيت';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('txAmount').value = '';
+    document.getElementById('txDesc').value = '';
+  }
+
+  // ==========================================
+  // التصدير والنسخ الاحتياطي
+  // ==========================================
+  function loadXLSX() {
+    return new Promise((res, rej) => {
+      if (window.XLSX) return res(window.XLSX);
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = () => res(window.XLSX); s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  async function exportExcel() {
+    showToast('جاري تجهيز ملف Excel...');
+    let X;
+    try { X = await loadXLSX(); } catch (e) { showToast('تعذر تحميل مكتبة Excel (تحتاج إنترنت)، جرّب CSV ⚠️'); return; }
+    const n = cleanNumber;
+    const months = {};
+    appState.recent.forEach(t => {
+      const k = txMonthKey(t.date); if (!k) return;
+      const m = months[k] = months[k] || { i: 0, e: 0 }, a = n(t.amount);
+      if (t.type === 'صرف') m.e += a; else if (t.type === 'قبض') m.i += a;
+    });
+    const sheets = [
+      ['المعاملات', [['التاريخ','النوع','التصنيف','البيان','من حساب','إلى حساب','المبلغ','ملاحظات']].concat(appState.recent.slice().reverse().map(t => [t.date, t.type, t.category, t.desc, t.fromAcc, t.toAcc, n(t.amount), t.notes || ''])), [12,14,18,28,16,16,12,24]],
+      ['الأرصدة', [['الحساب','الرصيد الحالي']].concat(appState.accounts.map(a => [a.name, n(a.current)]), [['الإجمالي', appState.accounts.reduce((s, a) => s + n(a.current), 0)]]), [24,16]],
+      ['ملخص شهري', [['الشهر','الدخل','المصروف','الصافي']].concat(Object.keys(months).sort().map(k => [k, months[k].i, months[k].e, months[k].i - months[k].e])), [12,14,14,14]],
+      ['المستحقات', [['التاريخ','النوع','الاسم','المبلغ','الحالة','ملاحظات']].concat((appState.debts || []).map(d => [d.date, isDebtLya(d.type) ? 'مدين (ليا)' : 'داين (عليا)', d.desc, n(d.amount), d.status, d.notes || ''])), [12,16,28,12,12,24]],
+      ['الالتزامات', [['تاريخ الاستحقاق','البيان','المبلغ','التكرار','الحالة','ملاحظات']].concat((appState.reminders || []).map(r => [r.dueDate, r.desc, n(r.amount), r.repeat, r.status, r.notes || ''])), [16,28,12,12,12,24]]
+    ];
+    const wb = X.utils.book_new();
+    sheets.forEach(([name, rows, widths]) => {
+      const ws = X.utils.aoa_to_sheet(rows);
+      ws['!cols'] = widths.map(w => ({ wch: w }));
+      X.utils.book_append_sheet(wb, ws, name);
+    });
+    wb.Workbook = { Views: [{ RTL: true }] };
+    X.writeFile(wb, 'My_Finance_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    showToast('تم تصدير ملف Excel ✅');
+  }
+
+  function exportTransactionsCSV() {
+    let csv = "\uFEFFالتاريخ,النوع,التصنيف,البيان,من حساب,إلى حساب,المبلغ\n";
+    appState.recent.forEach(t => {
+      csv += `"${t.date}","${t.type}","${t.category}","${String(t.desc || '').replace(/"/g, '""')}","${t.fromAcc || ''}","${t.toAcc || ''}","${t.amount}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `سجل_المعاملات_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    showToast('تم تصدير المعاملات بنجاح 📑');
+  }
+
+  function exportFullBackup() {
+    const payload = {
+      version: "My_Finance_v10",
+      exportedAt: new Date().toISOString(),
+      accounts: appState.accounts,
+      categories: appState.categories,
+      paymentMethods: appState.paymentMethods,
+      recent: appState.recent,
+      debts: appState.debts,
+      reminders: appState.reminders,
+      budgets: getBudgets(),
+      theme: safeStorage.getItem('theme') || 'auto',
+      autolock: safeStorage.getItem('autolock') || '1'
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `My_Finance_Backup_${localDateKey()}.json`;
+    link.click();
+    showToast('تم حفظ النسخة الاحتياطية الكاملة ✅');
+  }
+
+  function importFullBackup(event) {
+    const file = event.target && event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data || (!Array.isArray(data.recent) && !Array.isArray(data.accounts))) {
+          showToast('ملف النسخة الاحتياطية غير صالح ❌');
+          return;
+        }
+        if (!confirm('هل تريد استعادة هذه النسخة محلياً على هذا الجهاز؟ سيتم استبدال البيانات المحلية المؤقتة.')) return;
+        if (Array.isArray(data.accounts)) appState.accounts = data.accounts;
+        if (data.categories) appState.categories = data.categories;
+        if (Array.isArray(data.paymentMethods)) appState.paymentMethods = data.paymentMethods;
+        if (Array.isArray(data.recent)) appState.recent = data.recent;
+        if (Array.isArray(data.debts)) appState.debts = data.debts;
+        if (Array.isArray(data.reminders)) appState.reminders = data.reminders;
+        if (data.budgets && typeof data.budgets === 'object') safeStorage.setItem('budgets', JSON.stringify(data.budgets));
+        if (data.theme) { safeStorage.setItem('theme', data.theme); document.getElementById('themeSel').value = data.theme; applyTheme(); }
+        if (data.autolock) { safeStorage.setItem('autolock', data.autolock); document.getElementById('lockSel').value = data.autolock; }
+
+        saveCache();
+        renderCards();
+        renderRecentHome();
+        renderMonthlyOverview();
+        renderDebts();
+        renderReminders();
+        renderAnalytics();
+        filterHistoryList();
+        const opts = appState.paymentMethods.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+        document.getElementById('fromAcc').innerHTML = opts;
+        document.getElementById('toAcc').innerHTML = opts;
+        switchType(appState.currentType);
+        showToast('تمت استعادة النسخة الاحتياطية بنجاح ✅');
+      } catch (err) {
+        showToast('تعذر قراءة الملف: تأكد أنه ملف JSON صحيح ❌');
+      } finally {
+        event.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ==========================================
+  // استلام البيانات من Google Apps Script
+  // ==========================================
+  window.handleDataLoaded = function(data) {
+    if (data && data.status === "error") { showToast('خطأ من الشيت: ' + (data.message || '')); return; }
+    if (data && data.status === "success") {
+      setConnectionState('online', 'متصل بالشيت');
+      if (Array.isArray(data.accounts) && data.accounts.length > 0) {
+        appState.accounts = data.accounts.map(a => ({ ...a, current: cleanNumber(a.current) }));
+        renderCards();
+      }
+      if (data.categories) {
+        if (data.categories.expense && data.categories.expense.length > 0) appState.categories.expense = data.categories.expense;
+        if (data.categories.income && data.categories.income.length > 0) appState.categories.income = data.categories.income;
+        const currentSelectedCat = document.getElementById('txCat').value;
+        switchType(appState.currentType);
+        if (currentSelectedCat && currentSelectedCat !== '__ADD_NEW__') {
+          const list = appState.currentType === 'قبض' ? appState.categories.income : appState.categories.expense;
+          if (list.includes(currentSelectedCat)) document.getElementById('txCat').value = currentSelectedCat;
+        }
+      }
+      if (data.paymentMethods && data.paymentMethods.length > 0) {
+        appState.paymentMethods = data.paymentMethods;
+        const curFrom = document.getElementById('fromAcc').value;
+        const curTo = document.getElementById('toAcc').value;
+        const opts = data.paymentMethods.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+        document.getElementById('fromAcc').innerHTML = opts;
+        document.getElementById('toAcc').innerHTML = opts;
+        if (curFrom && data.paymentMethods.includes(curFrom)) document.getElementById('fromAcc').value = curFrom;
+        if (curTo && data.paymentMethods.includes(curTo)) document.getElementById('toAcc').value = curTo;
+      }
+      if (Array.isArray(data.recent)) {
+        appState.recent = data.recent;
+        renderRecentHome();
+        renderMonthlyOverview();
+        renderAnalytics();
+        const dMap = {};
+        appState.recent.forEach(t => { if (t.desc) dMap[t.desc] = 1; });
+        document.getElementById('descList').innerHTML = Object.keys(dMap).slice(0, 80).map(s => `<option value="${esc(s)}">`).join('');
+      }
+      if (Array.isArray(data.debts)) {
+        appState.debts = data.debts;
+        renderDebts();
+      }
+      if (Array.isArray(data.reminders)) {
+        appState.reminders = data.reminders;
+        renderReminders();
+      }
+      saveCache();
+    }
+  };
+
+  function fetchData() {
+    if (!SCRIPT_URL || SCRIPT_URL.indexOf('PASTE_NEW_') === 0) {
+      setConnectionState('offline', 'أضف رابط Apps Script');
+      return;
+    }
+    const old = document.getElementById('jsonpReadScript');
+    if (old) old.remove();
+    const script = document.createElement('script');
+    script.id = 'jsonpReadScript';
+    const params = new URLSearchParams({ callback: 'handleDataLoaded', _: String(Date.now()) });
+    if (API_TOKEN) params.set('token', API_TOKEN);
+    script.src = SCRIPT_URL + '?' + params.toString();
+    script.onerror = () => {
+      setConnectionState('offline', 'تعذر الاتصال بالشيت');
+      showToast('تعذر الاتصال بالشيت، يتم عرض آخر نسخة محفوظة 📴');
+    };
+    document.body.appendChild(script);
+  }
+
+  // ==========================================
+  // تسجيل حركة جديدة (مع إرسال action=add صريح)
+  // ==========================================
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    const _amt = parseFloat(document.getElementById('txAmount').value);
+    if (!(_amt > 0)) { showToast('أدخل مبلغاً صحيحاً ⚠️'); return; }
+    if (appState.currentType === 'تحويل بين حسابات' && document.getElementById('fromAcc').value === document.getElementById('toAcc').value) {
+      showToast('اختر حسابين مختلفين ⚠️');
+      return;
+    }
+    if (appState.currentType !== 'قبض') {
+      const _a = appState.accounts.find(x => x.name === document.getElementById('fromAcc').value);
+      if (!editRow && _a && cleanNumber(_a.current) < _amt && !confirm('رصيد الحساب (' + fmt(cleanNumber(_a.current)) + ') أقل من المبلغ. هل تريد المتابعة؟')) return;
+    }
+    if (editRow) {
+      const tp = appState.currentType, tr = tp === 'تحويل بين حسابات';
+      const pr = new URLSearchParams({
+        action: 'update', row: editRow, fp: editFp, date: document.getElementById('txDate').value, type: tp,
+        category: tr ? 'تحويل' : document.getElementById('txCat').value,
+        description: document.getElementById('txDesc').value || (tr ? 'تحويل' : 'معاملة'),
+        fromAccount: document.getElementById('fromAcc').value, toAccount: tr ? document.getElementById('toAcc').value : '', amount: _amt, notes: ''
+      });
+      cancelEdit(); mutate(pr); switchNavTab('history'); return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerText = 'جاري التسجيل...';
+
+    const type = appState.currentType;
+    const amount = parseFloat(document.getElementById('txAmount').value);
+    const fromAcc = document.getElementById('fromAcc').value;
+    const toAcc = type === 'تحويل بين حسابات' ? document.getElementById('toAcc').value : '';
+    const desc = document.getElementById('txDesc').value || (type === 'تحويل بين حسابات' ? 'تحويل' : 'معاملة');
+    const date = document.getElementById('txDate').value;
+    const cat = type === 'تحويل بين حسابات' ? 'تحويل' : document.getElementById('txCat').value;
+
+    const params = new URLSearchParams();
+    params.append('action', 'add');
+    params.append('date', date);
+    params.append('type', type);
+    params.append('category', cat);
+    params.append('description', desc);
+    params.append('fromAccount', fromAcc);
+    params.append('toAccount', toAcc);
+    params.append('amount', amount);
+    params.append('notes', '');
+
+    const accountSnapshot = appState.accounts.map(a => ({ ...a }));
+    const optimisticTx = { date, type, category: cat, desc, fromAcc, toAcc, amount };
+    appState.recent.unshift(optimisticTx);
+
+    if (type === 'صرف') {
+      const a = appState.accounts.find(x => x.name === fromAcc);
+      if (a) a.current -= amount;
+    } else if (type === 'قبض') {
+      const a = appState.accounts.find(x => x.name === fromAcc);
+      if (a) a.current += amount;
+    } else if (type === 'تحويل بين حسابات') {
+      const f = appState.accounts.find(x => x.name === fromAcc);
+      const t = appState.accounts.find(x => x.name === toAcc);
+      if (f) f.current -= amount;
+      if (t) t.current += amount;
+    }
+
+    renderCards();
+    renderRecentHome();
+    renderMonthlyOverview();
+    saveCache();
+
+    showToast('تم تجهيز الحركة وإرسالها للشيت...');
+    document.getElementById('txAmount').value = '';
+    document.getElementById('txDesc').value = '';
+
+    const txResult = await sendOrQueue(params.toString());
+    if (txResult.ok) {
+      setConnectionState('online', 'تم تأكيد الحفظ');
+      showToast('تم تسجيل الحركة في الشيت بنجاح ✅');
+    } else if (txResult.permanent) {
+      appState.recent = appState.recent.filter(t => t !== optimisticTx);
+      appState.accounts = accountSnapshot;
+      renderCards(); renderRecentHome(); renderMonthlyOverview(); renderAnalytics(); saveCache();
+      showToast('الشيت رفض تسجيل الحركة: ' + txResult.error.message);
+    } else {
+      setConnectionState('offline', 'الحركة بانتظار التأكيد');
+    }
+
+    if (pendingReminderPayment) {
+      const matchesReminder = type === 'صرف' && desc === pendingReminderPayment.desc &&
+        Math.abs(amount - pendingReminderPayment.amount) < 0.001;
+      if (matchesReminder) {
+        const reminder = appState.reminders.find(r => String(r.id ?? r.row ?? '') === String(pendingReminderPayment.row));
+        if (reminder) {
+          const statusParams = new URLSearchParams({ action: 'update_reminder_status', id: reminder.id || '', row: reminder.id ? '' : reminder.row, status: 'تم الدفع' });
+          if (txResult.ok) {
+            const statusResult = await sendOrQueue(statusParams.toString());
+            if (statusResult.ok) { reminder.status = 'تم الدفع'; renderReminders(); saveCache(); }
+            else if (statusResult.permanent) showToast('تم حفظ المصروف، لكن الشيت رفض تحديث حالة الالتزام: ' + statusResult.error.message);
+          } else if (!txResult.permanent) {
+            queueTx(makeRequest(statusParams.toString()));
+          }
+        }
+      }
+      pendingReminderPayment = null;
+    }
+
+    setTimeout(fetchData, 700);
+    btn.disabled = false;
+    btn.innerText = 'تسجيل الحركة في الشيت';
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toastMessage');
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2500);
+  }
+
+  // التهيئة
+  applyTheme();
+  loadCache();
+  setupNumpadListeners();
+  initSecurity();
+  renderCards();
+  renderRecentHome();
+  renderMonthlyOverview();
+  renderDebts();
+  renderReminders();
+  switchType('صرف');
+  const initialOpts = appState.paymentMethods.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  document.getElementById('fromAcc').innerHTML = initialOpts;
+  document.getElementById('toAcc').innerHTML = initialOpts;
+
+  document.getElementById('themeSel').value = safeStorage.getItem('theme') || 'auto';
+  document.getElementById('lockSel').value = safeStorage.getItem('autolock') || '1';
+  updateQueueUI();
+  setConnectionState(navigator.onLine ? 'online' : 'offline', navigator.onLine ? 'الاتصال متاح' : 'غير متصل');
+  flushQueue();
+  fetchData();
+</script>
+</body>
+</html>

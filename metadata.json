@@ -1,0 +1,6 @@
+{
+  "name": "محفظتي | الإدارة المالية الشخصية",
+  "description": "نظام متكامل لإدارة الأموال والمحافظ والتصنيفات والمستحقات مع ربط مباشر بـ Google Sheets وتنسيقه وتصدير نسخة HTML مستقلة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

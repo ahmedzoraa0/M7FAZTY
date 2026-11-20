@@ -1,0 +1,302 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f5f0e6;
+  --bg-glow-1: rgba(201, 162, 75, 0.16);
+  --bg-glow-2: rgba(201, 162, 75, 0.08);
+  --card-bg: #fffdf8;
+  --surface-soft: #f9f5ec;
+  --header-bg: rgba(255, 253, 248, 0.88);
+  --border: #e6dcc8;
+  --border-focus: #b8862f;
+  --text: #1c1711;
+  --text-muted: #7d7061;
+  --primary: #1c1711;
+  --primary-accent: #b8862f;
+  --accent-gradient: linear-gradient(135deg, #e0bb6a, #a8782a);
+  --accent-contrast: #1c1208;
+  --accent-shadow: rgba(168, 120, 42, 0.42);
+  --hero-bg: radial-gradient(circle at 14% 20%, rgba(224, 187, 106, 0.28), transparent 55%), radial-gradient(circle at 90% 85%, rgba(184, 134, 47, 0.18), transparent 55%), linear-gradient(135deg, #fffdf9 0%, #f7edd9 55%, #efe0c1 100%);
+  --hero-border: rgba(184, 134, 47, 0.35);
+  --hero-shadow: 0 14px 32px -14px rgba(138, 102, 36, 0.28);
+  --hero-text: #1c1711;
+  --hero-accent: #9c6e1e;
+  --lock-bg: radial-gradient(circle at 50% -10%, #efe0c1, #f5f0e6 65%);
+  --lock-surface: rgba(28, 23, 17, 0.06);
+  --lock-border: rgba(184, 134, 47, 0.28);
+  --lock-text: #1c1711;
+  --lock-muted: #7d7061;
+  --income: #0f8a5f;
+  --income-bg: #e7f5ee;
+  --expense: #c43d4b;
+  --expense-bg: #fbebec;
+  --transfer: #6b5bd6;
+  --transfer-bg: #efecfb;
+  --warning: #b45309;
+  --warning-bg: #fef3c7;
+  --info: #0284c7;
+  --info-bg: #e0f2fe;
+  --shadow-sm: 0 2px 8px rgba(60, 40, 10, 0.05);
+  --shadow-md: 0 12px 30px -12px rgba(90, 60, 10, 0.14);
+  --font-main: "Tajawal", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-num: "IBM Plex Mono", "Tajawal", monospace;
+  --radius-card: 18px;
+  --radius-btn: 12px;
+  --radius-icon: 12px;
+  --border-w: 1px;
+  --icon-stroke: 2;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-main);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background:
+    radial-gradient(900px 420px at 90% -8%, var(--bg-glow-1), transparent 60%),
+    radial-gradient(700px 400px at -10% 35%, var(--bg-glow-2), transparent 60%),
+    var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  margin: 0;
+  transition: background-color 0.22s ease, color 0.22s ease;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-mono-num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Theme-Aware Structural Primitives ===== */
+.theme-card {
+  border-radius: var(--radius-card) !important;
+  border-width: var(--border-w) !important;
+}
+
+.theme-btn {
+  border-radius: var(--radius-btn) !important;
+  border-width: var(--border-w) !important;
+}
+
+.theme-icon-box {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: var(--radius-icon);
+  border: var(--border-w) solid var(--border);
+  background: var(--surface-soft);
+  color: var(--primary-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.theme-icon-box svg,
+svg.lucide {
+  stroke-width: var(--icon-stroke);
+}
+
+/* ===== Distinct Full-Identity Theme Treatments ===== */
+
+/* 1. Retro CRT Green Terminal */
+[data-theme-style="crt"] body {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(51, 255, 102, 0.035) 0px,
+      rgba(51, 255, 102, 0.035) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    var(--bg);
+}
+
+[data-theme-style="crt"] .rounded-2xl,
+[data-theme-style="crt"] .rounded-3xl,
+[data-theme-style="crt"] .rounded-xl,
+[data-theme-style="crt"] .rounded-lg {
+  border-radius: 2px !important;
+}
+
+[data-theme-style="crt"] .theme-icon-box {
+  border-radius: 0 !important;
+  border-color: var(--primary-accent);
+  box-shadow: inset 0 0 8px rgba(51, 255, 102, 0.2);
+}
+
+[data-theme-style="crt"] h1,
+[data-theme-style="crt"] h2,
+[data-theme-style="crt"] .font-mono-num {
+  text-shadow: 0 0 8px rgba(51, 255, 102, 0.32);
+}
+
+/* 2. Minecraft Voxel / Pixel Blocks */
+[data-theme-style="minecraft"] body {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--bg);
+}
+
+[data-theme-style="minecraft"] .rounded-2xl,
+[data-theme-style="minecraft"] .rounded-3xl,
+[data-theme-style="minecraft"] .rounded-xl,
+[data-theme-style="minecraft"] .rounded-lg {
+  border-radius: 0px !important;
+}
+
+[data-theme-style="minecraft"] .theme-icon-box {
+  border-radius: 0 !important;
+  border-width: 2px !important;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.45), inset 2px 2px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme-style="minecraft"] button,
+[data-theme-style="minecraft"] input,
+[data-theme-style="minecraft"] select {
+  border-radius: 0px !important;
+}
+
+/* 3. LEGO Tactile Studded Bricks */
+[data-theme-style="lego"] body {
+  background:
+    radial-gradient(circle at 12px 12px, rgba(20, 23, 31, 0.045) 3px, transparent 3.5px) 0 0 / 28px 28px,
+    var(--bg);
+}
+
+[data-theme-style="lego"] .rounded-2xl,
+[data-theme-style="lego"] .rounded-3xl {
+  border-radius: 10px !important;
+  border-width: 2px !important;
+}
+
+[data-theme-style="lego"] .rounded-xl,
+[data-theme-style="lego"] .rounded-lg {
+  border-radius: 8px !important;
+  border-width: 2px !important;
+}
+
+[data-theme-style="lego"] .theme-icon-box {
+  border-radius: 50% !important;
+  border-width: 2px !important;
+  border-color: var(--border) !important;
+  background: #f5cd2f !important;
+  color: #14171f !important;
+  box-shadow: 0 2px 0 #14171f;
+}
+
+/* 4. Classic Heritage Antique Ledger */
+[data-theme-style="classic"] .rounded-2xl,
+[data-theme-style="classic"] .rounded-3xl {
+  border-radius: 4px !important;
+}
+
+[data-theme-style="classic"] .rounded-xl,
+[data-theme-style="classic"] .rounded-lg {
+  border-radius: 3px !important;
+}
+
+[data-theme-style="classic"] .theme-icon-box {
+  border-radius: 4px !important;
+  border-style: double;
+  border-width: 3px;
+}
+
+[data-theme-style="classic"] h1,
+[data-theme-style="classic"] h2,
+[data-theme-style="classic"] h3 {
+  letter-spacing: 0.01em;
+}
+
+/* 5. Vapor Arcade 8-Bit */
+[data-theme-style="arcade"] body {
+  background:
+    linear-gradient(90deg, rgba(0, 238, 255, 0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(rgba(255, 78, 205, 0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--bg);
+}
+
+[data-theme-style="arcade"] .rounded-2xl,
+[data-theme-style="arcade"] .rounded-3xl,
+[data-theme-style="arcade"] .rounded-xl,
+[data-theme-style="arcade"] .rounded-lg {
+  border-radius: 4px !important;
+  border-width: 2px !important;
+}
+
+[data-theme-style="arcade"] .theme-icon-box {
+  border-radius: 4px !important;
+  border-color: var(--primary-accent) !important;
+  box-shadow: 2px 2px 0 rgba(0, 238, 255, 0.35);
+}
+
+/* Official Google Sign-In button style per Workspace Integration skill */
+.gsi-material-button {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  background-color: #ffffff;
+  border: 1px solid #747775;
+  border-radius: 12px;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: "Tajawal", "Roboto", arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  height: 44px;
+  letter-spacing: 0.1px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 16px;
+  position: relative;
+  text-align: center;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  vertical-align: middle;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.gsi-material-button:hover {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  background-color: #f8fafd;
+}
+
+.gsi-material-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.gsi-material-button-icon {
+  height: 20px;
+  width: 20px;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
