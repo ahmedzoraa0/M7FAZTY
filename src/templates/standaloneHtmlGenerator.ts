@@ -1,5 +1,6 @@
 import { THEMES } from '../themes';
 import { generateAppsScriptCode } from './appsScriptTemplate';
+import { APP_VERSION, SCRIPT_VERSION, normalizeGithubRepo } from '../version';
 
 export function generateStandaloneHtml(options?: {
   scriptUrl?: string;
@@ -7,6 +8,7 @@ export function generateStandaloneHtml(options?: {
   apiToken?: string;
   profileName?: string;
   starterMode?: boolean;
+  githubRepo?: string;
 }): string {
   const isStarter = Boolean(options?.starterMode);
   const scriptUrl = isStarter
@@ -18,12 +20,14 @@ export function generateStandaloneHtml(options?: {
     : options?.spreadsheetId ?? '1FPTv7C_rNgHdn2bpTsjs2hQEXHDEvdk5C1TiQEb35ak';
   const apiToken = options?.apiToken || '';
   const profileName = (options?.profileName || '').trim();
+  const githubRepo = normalizeGithubRepo(options?.githubRepo || '');
   const safeEmbeddedScript = JSON.stringify(generateAppsScriptCode(apiToken)).replace(/<\//g, '<\\/');
   const bakedConfigJson = JSON.stringify({
     scriptUrl,
     spreadsheetId,
     apiToken,
     profileName,
+    githubRepo,
   }).replace(/<\//g, '<\\/');
 
   const themeCssBlocks = THEMES.map((theme) => {
@@ -1236,6 +1240,18 @@ ${themeCssBlocks}
     </div>
   </header>
 
+  <!-- شريط إشعار توفر تحديث جديد من GitHub -->
+  <div id="updateAvailableBanner" style="display:none;margin:12px 18px 0;padding:12px 14px;border-radius:var(--radius-card);border:var(--border-w) solid var(--primary-accent);background:var(--surface-soft);box-shadow:var(--shadow-sm);align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+    <div style="min-width:0;flex:1;">
+      <div style="font-size:0.86rem;font-weight:800;color:var(--text);" id="updateBannerTitle">يتوفر تحديث جديد للتطبيق</div>
+      <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px;line-height:1.45;" id="updateBannerNotes">اضغط لتحديث الملف تلقائياً مع الحفاظ على ربط شيتك وإعداداتك.</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <button type="button" class="action-link-btn" id="bannerApplyUpdateBtn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:8px 14px;" onclick="applyGithubUpdate()">تحديث الملف الآن</button>
+      <button type="button" class="btn-secondary" style="padding:6px 10px;" onclick="dismissUpdateBanner()" title="إخفاء مؤقتاً">✕</button>
+    </div>
+  </div>
+
   <!-- ================= TAB 1: الرئيسية ================= -->
   <div class="tab-content active" id="tabHome">
     <div class="setup-banner" id="unlinkedBanner" style="grid-column: 1 / -1;">
@@ -1879,6 +1895,37 @@ ${themeCssBlocks}
         </div>
       </div>
     </div>
+
+    <!-- 5. التحديثات التلقائية من GitHub -->
+    <div class="card">
+      <div class="setting-group-head">التحديثات من GitHub <span class="num-font" style="margin-right:6px;font-weight:700;color:var(--primary-accent);">v${APP_VERSION}</span></div>
+      <div class="setting-item" style="align-items:flex-start;">
+        <div class="setting-lead">
+          <div class="theme-icon-box"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9"></path></svg></div>
+          <div class="setting-info">
+            <div class="setting-title">مستودع GitHub للتحديثات</div>
+            <div class="setting-desc">أدخل رابط مستودع GitHub (أو <span dir="ltr" class="num-font">owner/repo</span>) لفحص التحديثات وتنزيل النسخة الأحدث مربوطة بشيتك تلقائياً.</div>
+          </div>
+        </div>
+        <div class="setting-actions" style="flex:1 1 240px;justify-content:flex-end;">
+          <input type="text" id="githubRepoInput" dir="ltr" class="input-ctrl" style="min-width:170px;max-width:240px;min-height:36px;padding:6px 10px;font-size:0.78rem;" placeholder="username/m7fazty" onchange="saveGithubRepoInput(this.value)">
+          <button type="button" class="btn-secondary" onclick="checkGithubUpdates(false)">فحص التحديثات</button>
+        </div>
+      </div>
+
+      <div class="setting-item" id="githubUpdateStatusRow">
+        <div class="setting-lead">
+          <div class="theme-icon-box"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></div>
+          <div class="setting-info">
+            <div class="setting-title">حالة الإصدار</div>
+            <div class="setting-desc" id="githubUpdateStatus">الإصدار الحالي v${APP_VERSION} — اضغط «فحص التحديثات» للتحقق من وجود إصدار أحدث.</div>
+          </div>
+        </div>
+        <div class="setting-actions">
+          <button type="button" class="btn-secondary" id="settingsApplyUpdateBtn" style="display:none;background:var(--accent-gradient);color:var(--accent-contrast);border:none;" onclick="applyGithubUpdate()">تحديث الملف الآن</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1958,6 +2005,8 @@ ${themeCssBlocks}
 
 <script>
   const __PRISTINE_DOC_HTML__ = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
+  const APP_VERSION = ${JSON.stringify(APP_VERSION)};
+  const SCRIPT_VERSION = ${JSON.stringify(SCRIPT_VERSION)};
   const BAKED_CONFIG = /*__MF_CONFIG_BEGIN__*/${bakedConfigJson}/*__MF_CONFIG_END__*/;
   const APPS_SCRIPT_CODE = ${safeEmbeddedScript};
   const THEME_LIST = ${themesJson};
@@ -3586,7 +3635,8 @@ ${themeCssBlocks}
       scriptUrl: scriptUrl || getActiveScriptUrl(),
       spreadsheetId: sheetId || getActiveSpreadsheetId(),
       apiToken: getActiveApiToken(),
-      profileName: finalName
+      profileName: finalName,
+      githubRepo: getGithubRepo()
     };
     const replacement = '/*__MF_CONFIG_BEGIN__*/' + JSON.stringify(finalConfig).replace(/<\\//g, '<\\\\/') + '/*__MF_CONFIG_END__*/';
     const updatedHtml = __PRISTINE_DOC_HTML__.replace(/\\/\\*__MF_CONFIG_BEGIN__\\*\\/[\\s\\S]*?\\/\\*__MF_CONFIG_END__\\*\\//, () => replacement);
@@ -3596,6 +3646,214 @@ ${themeCssBlocks}
     link.download = slug ? ('M7FAZTY_' + slug + '.html') : 'M7FAZTY.html';
     link.click();
     showToast('تم تحميل ملف ' + link.download + ' مربوط بشيتك بشكل مستقل ✅');
+  }
+
+  /* ===== نظام التحديث التلقائي من GitHub ===== */
+  let latestGithubRelease = null;
+
+  function normalizeRepoSlug(raw) {
+    const s = String(raw || '').trim()
+      .replace(/^https?:\\/\\/(www\\.)?github\\.com\\//i, '')
+      .replace(/^github\\.com\\//i, '')
+      .replace(/\\.git$/i, '')
+      .replace(/^\\/+|\\/+$/g, '');
+    const parts = s.split('/').filter(Boolean);
+    if (parts.length < 2) return '';
+    return parts[0].replace(/[^a-zA-Z0-9._-]/g, '') + '/' + parts[1].replace(/[^a-zA-Z0-9._-]/g, '');
+  }
+
+  function getGithubRepo() {
+    return normalizeRepoSlug(safeStorage.getItem('mf_github_repo') || BAKED_CONFIG.githubRepo || '');
+  }
+
+  function saveGithubRepoInput(val) {
+    const slug = normalizeRepoSlug(val);
+    if (slug) {
+      safeStorage.setItem('mf_github_repo', slug);
+      const el = document.getElementById('githubRepoInput');
+      if (el) el.value = slug;
+      showToast('تم حفظ مستودع التحديثات: ' + slug);
+    } else if (!String(val || '').trim()) {
+      safeStorage.removeItem('mf_github_repo');
+      showToast('تم مسح رابط المستودع');
+    } else {
+      showToast('صيغة المستودع غير صحيحة — مثال: username/m7fazty');
+    }
+  }
+
+  function compareVersions(a, b) {
+    const pa = String(a || '0').replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+    const pb = String(b || '0').replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+    const len = Math.max(pa.length, pb.length);
+    for (let i = 0; i < len; i++) {
+      const va = pa[i] || 0, vb = pb[i] || 0;
+      if (va > vb) return 1;
+      if (va < vb) return -1;
+    }
+    return 0;
+  }
+
+  function dismissUpdateBanner() {
+    const b = document.getElementById('updateAvailableBanner');
+    if (b) b.style.display = 'none';
+  }
+
+  async function fetchGithubManifest(repo) {
+    const branches = ['main', 'master'];
+    for (let i = 0; i < branches.length; i++) {
+      const br = branches[i];
+      try {
+        const res = await fetch('https://raw.githubusercontent.com/' + repo + '/' + br + '/releases/version.json?t=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.version) {
+            return {
+              version: String(data.version).replace(/^v/i, ''),
+              scriptVersion: String(data.scriptVersion || ''),
+              notes: Array.isArray(data.notes) ? data.notes : [],
+              branch: br,
+              htmlUrl: 'https://raw.githubusercontent.com/' + repo + '/' + br + '/' + (data.htmlFile || 'releases/M7FAZTY.html')
+            };
+          }
+        }
+      } catch (e) {}
+    }
+    // Fallback: GitHub Releases API (in case version.json isn't on main/master yet)
+    const apiRes = await fetch('https://api.github.com/repos/' + repo + '/releases/latest', { headers: { Accept: 'application/vnd.github+json' } });
+    if (apiRes.ok) {
+      const rel = await apiRes.json();
+      const ver = String(rel.tag_name || '').replace(/^v/i, '');
+      if (ver) {
+        return {
+          version: ver,
+          scriptVersion: '',
+          notes: rel.body ? [String(rel.body).split('\\n')[0]] : [],
+          branch: 'main',
+          htmlUrl: 'https://raw.githubusercontent.com/' + repo + '/main/releases/M7FAZTY.html'
+        };
+      }
+    }
+    throw new Error('تعذر العثور على ملف releases/version.json في المستودع (تأكد أن المستودع عام Public)');
+  }
+
+  async function checkGithubUpdates(silent) {
+    const repo = getGithubRepo();
+    const statusEl = document.getElementById('githubUpdateStatus');
+    const settingsBtn = document.getElementById('settingsApplyUpdateBtn');
+    const banner = document.getElementById('updateAvailableBanner');
+    const bannerTitle = document.getElementById('updateBannerTitle');
+    const bannerNotes = document.getElementById('updateBannerNotes');
+
+    if (!repo) {
+      if (!silent) {
+        if (statusEl) statusEl.innerText = 'أدخل رابط مستودع GitHub أولاً (مثال: username/m7fazty) ثم أعد الفحص.';
+        showToast('أدخل مستودع GitHub في الإعدادات أولاً');
+      }
+      return;
+    }
+    if (!navigator.onLine) {
+      if (!silent && statusEl) statusEl.innerText = 'لا يوجد اتصال بالإنترنت حالياً.';
+      return;
+    }
+    if (!silent && statusEl) statusEl.innerText = 'جاري فحص التحديثات من ' + repo + '...';
+
+    try {
+      const info = await fetchGithubManifest(repo);
+      latestGithubRelease = info;
+      if (compareVersions(info.version, APP_VERSION) > 0) {
+        const noteLine = info.notes && info.notes.length ? info.notes.slice(0, 2).join(' • ') : 'تحسينات وإضافات جديدة جاهزة للتحميل.';
+        const scriptAlert = info.scriptVersion && compareVersions(info.scriptVersion, SCRIPT_VERSION) > 0
+          ? ' (يتضمن أيضاً تحديثاً لكود Code.gs)'
+          : '';
+        if (statusEl) statusEl.innerText = 'يتوفر إصدار جديد v' + info.version + ' (إصدارك الحالي v' + APP_VERSION + ')' + scriptAlert + ' — ' + noteLine;
+        if (settingsBtn) settingsBtn.style.display = 'inline-flex';
+        if (bannerTitle) bannerTitle.innerText = 'يتوفر تحديث جديد لـ M7FAZTY (v' + info.version + ')';
+        if (bannerNotes) bannerNotes.innerText = noteLine + scriptAlert + ' — التحديث يحتفظ بربط شيتك وإعداداتك تلقائياً.';
+        if (banner) banner.style.display = 'flex';
+        if (!silent) showToast('يتوفر إصدار جديد v' + info.version + ' 🎉');
+      } else {
+        if (statusEl) statusEl.innerText = 'أنت تستخدم أحدث إصدار بالفعل (v' + APP_VERSION + ') ✅';
+        if (settingsBtn) settingsBtn.style.display = 'none';
+        if (banner) banner.style.display = 'none';
+        if (!silent) showToast('التطبيق محدّث على أحدث إصدار (v' + APP_VERSION + ') ✅');
+      }
+    } catch (err) {
+      if (!silent) {
+        if (statusEl) statusEl.innerText = 'تعذر الفحص: ' + (err && err.message ? err.message : 'خطأ في الاتصال');
+        showToast('تعذر فحص التحديثات من GitHub');
+      }
+    }
+  }
+
+  async function applyGithubUpdate() {
+    const repo = getGithubRepo();
+    if (!repo) { showToast('أدخل مستودع GitHub أولاً'); return; }
+    const bBtn = document.getElementById('bannerApplyUpdateBtn');
+    const sBtn = document.getElementById('settingsApplyUpdateBtn');
+    if (bBtn) { bBtn.disabled = true; bBtn.innerText = 'جاري تنزيل التحديث...'; }
+    if (sBtn) { sBtn.disabled = true; sBtn.innerText = 'جاري التحديث...'; }
+    try {
+      const info = latestGithubRelease || (await fetchGithubManifest(repo));
+      const res = await fetch(info.htmlUrl + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('تعذر تحميل ملف النسخة الجديدة من GitHub');
+      let remoteHtml = await res.text();
+      if (!remoteHtml.includes('/*__MF_CONFIG_BEGIN__*/') || !remoteHtml.includes('/*__MF_CONFIG_END__*/')) {
+        throw new Error('ملف التحديث غير صالح أو غير مكتمل');
+      }
+      const preservedConfig = {
+        scriptUrl: getActiveScriptUrl(),
+        spreadsheetId: getActiveSpreadsheetId(),
+        apiToken: getActiveApiToken(),
+        profileName: getProfileName(),
+        githubRepo: repo
+      };
+      const replacement = '/*__MF_CONFIG_BEGIN__*/' + JSON.stringify(preservedConfig).replace(/<\\//g, '<\\\\/') + '/*__MF_CONFIG_END__*/';
+      remoteHtml = remoteHtml.replace(/\\/\\*__MF_CONFIG_BEGIN__\\*\\/[\\s\\S]*?\\/\\*__MF_CONFIG_END__\\*\\//, () => replacement);
+
+      const finalName = getProfileName();
+      const slug = finalName.replace(/[^\\w\\u0600-\\u06FF-]+/g, '_').replace(/^_+|_+$/g, '');
+      const suggestedName = slug ? ('M7FAZTY_' + slug + '_v' + info.version + '.html') : ('M7FAZTY_v' + info.version + '.html');
+
+      // إذا كان المتصفح يدعم الحفظ المباشر (Chrome/Edge على الكمبيوتر) يمكن استبدال الملف مباشرة
+      let savedInPlace = false;
+      if (typeof window.showSaveFilePicker === 'function') {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: suggestedName,
+            types: [{ description: 'HTML App', accept: { 'text/html': ['.html'] } }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(remoteHtml);
+          await writable.close();
+          savedInPlace = true;
+        } catch (pickerErr) {
+          if (pickerErr && pickerErr.name === 'AbortError') {
+            showToast('تم إلغاء حفظ التحديث');
+            return;
+          }
+        }
+      }
+
+      if (!savedInPlace) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([remoteHtml], { type: 'text/html;charset=utf-8' }));
+        link.download = suggestedName;
+        link.click();
+      }
+
+      const statusEl = document.getElementById('githubUpdateStatus');
+      const scriptMsg = info.scriptVersion && compareVersions(info.scriptVersion, SCRIPT_VERSION) > 0
+        ? ' — كما يُنصح بنسخ كود Code.gs الجديد من المعالج.'
+        : '';
+      if (statusEl) statusEl.innerText = 'تم حفظ النسخة الجديدة v' + info.version + ' مربوطة بشيتك تلقائياً ✅ افتح الملف الجديد لاستكمال العمل' + scriptMsg;
+      showToast('تم تجهيز وحفظ النسخة المحدثة v' + info.version + ' مربوطة بشيتك ✅');
+      dismissUpdateBanner();
+    } catch (err) {
+      showToast('فشل التحديث: ' + (err && err.message ? err.message : 'خطأ غير متوقع'));
+    } finally {
+      if (bBtn) { bBtn.disabled = false; bBtn.innerText = 'تحديث الملف الآن'; }
+      if (sBtn) { sBtn.disabled = false; sBtn.innerText = 'تحديث الملف الآن'; }
+    }
   }
 
   async function handleFormSubmit(e) {
@@ -3673,7 +3931,12 @@ ${themeCssBlocks}
   if (!getActiveScriptUrl()) {
     switchNavTab('setup');
   }
+  const ghInput = document.getElementById('githubRepoInput');
+  if (ghInput) ghInput.value = getGithubRepo();
   flushQueue(); fetchData();
+  if (getGithubRepo()) {
+    setTimeout(() => checkGithubUpdates(true), 2200);
+  }
 </script>
 </body>
 </html>`;

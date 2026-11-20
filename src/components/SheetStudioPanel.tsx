@@ -18,6 +18,7 @@ import {
 import { SheetInspectionReport } from '../types';
 import { generateAppsScriptCode } from '../templates/appsScriptTemplate';
 import { generateStandaloneHtml } from '../templates/standaloneHtmlGenerator';
+import { APP_VERSION, normalizeGithubRepo } from '../version';
 import {
   DriveSheetMatch,
   buildM7faztySheetName,
@@ -84,6 +85,16 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
   const [selectingSheetId, setSelectingSheetId] = useState<string | null>(null);
   const [formatting, setFormatting] = useState(false);
   const [copiedGs, setCopiedGs] = useState(false);
+  const [githubRepoInput, setGithubRepoInput] = useState<string>(
+    () => localStorage.getItem('mf_github_repo') || ''
+  );
+
+  const handleGithubRepoChange = (val: string) => {
+    setGithubRepoInput(val);
+    const slug = normalizeGithubRepo(val);
+    if (slug) localStorage.setItem('mf_github_repo', slug);
+    else if (!val.trim()) localStorage.removeItem('mf_github_repo');
+  };
 
   const cleanSheetId = extractSpreadsheetId(spreadsheetIdInput);
   const expectedSheetName = buildM7faztySheetName(profileName);
@@ -135,13 +146,15 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
 
   const handleDownloadHtml = (starterMode = false) => {
     const cleanProfile = profileName.trim();
+    const cleanRepo = normalizeGithubRepo(githubRepoInput);
     const html = generateStandaloneHtml(
       starterMode
-        ? { starterMode: true, profileName: cleanProfile }
+        ? { starterMode: true, profileName: cleanProfile, githubRepo: cleanRepo }
         : {
             scriptUrl: scriptUrlInput.trim(),
             spreadsheetId: cleanSheetId,
             profileName: cleanProfile,
+            githubRepo: cleanRepo,
           }
     );
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -525,6 +538,36 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
             الصق الرابط في خانة Web App URL، اختبره، ثم حمّل ملف الـ HTML الخاص بهذه المحفظة.
           </li>
         </ol>
+
+        <div
+          className="rounded-xl p-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+          style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
+        >
+          <div className="min-w-0">
+            <div className="text-xs font-extrabold flex items-center gap-2">
+              <span>ربط التحديثات التلقائية من GitHub (اختياري)</span>
+              <span className="font-mono-num text-[11px]" style={{ color: 'var(--primary-accent)' }}>
+                v{APP_VERSION}
+              </span>
+            </div>
+            <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              لو أدخلت رابط مستودع GitHub هنا (مثال: <span dir="ltr" className="font-mono-num">username/m7fazty</span>)، ملف الـ HTML المحمّل سيفحص التحديثات تلقائياً ويُظهر إشعار التحديث عند رفع نسخة جديدة.
+            </p>
+          </div>
+          <input
+            type="text"
+            dir="ltr"
+            value={githubRepoInput}
+            onChange={(e) => handleGithubRepoChange(e.target.value)}
+            placeholder="username/m7fazty"
+            className="sm:w-56 min-h-[38px] px-3 rounded-xl border text-xs font-mono-num outline-none shrink-0"
+            style={{
+              background: 'var(--card-bg)',
+              borderColor: 'var(--border)',
+              color: 'var(--text)',
+            }}
+          />
+        </div>
 
         <div className="flex flex-wrap gap-2.5">
           <button

@@ -1,0 +1,82 @@
+name: Build & Publish M7FAZTY Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - 'releases/**'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build M7FAZTY.html, Code.gs & version.json
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: npm run build:release
+
+      - name: Read version & release notes
+        id: meta
+        run: |
+          VERSION=$(node -p "require('./releases/version.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          node -e "
+            const v = require('./releases/version.json');
+            const lines = [
+              '## M7FAZTY v' + v.version,
+              '',
+              '### طريقة التثبيت السريعة',
+              '1. حمّل ملف **M7FAZTY.html** من المرفقات بالأسفل.',
+              '2. افتحه مباشرة من المتصفح على الموبايل أو الكمبيوتر واتبع معالج الربط بشيت Google Sheets.',
+              '',
+              '### أبرز ما في هذا الإصدار',
+              ...(v.notes || []).map(n => '- ' + n),
+              '',
+              '> **ملاحظة للمستخدمين الحاليين:** افتح ملفك القديم واضغط **تحديث الملف الآن** من الإعدادات أو شريط التحديث — سيحتفظ بربط شيتك وإعداداتك تلقائياً.'
+            ];
+            require('fs').writeFileSync('release-notes.md', lines.join('\n'), 'utf8');
+          "
+
+      - name: Commit updated releases/ artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add releases/M7FAZTY.html releases/Code.gs releases/version.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(release): build M7FAZTY v${{ steps.meta.outputs.version }} [skip ci]"
+            git push
+          fi
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.meta.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "M7FAZTY $TAG" --notes-file release-notes.md
+            gh release upload "$TAG" releases/M7FAZTY.html releases/Code.gs releases/version.json --clobber
+          else
+            gh release create "$TAG" releases/M7FAZTY.html releases/Code.gs releases/version.json \
+              --title "M7FAZTY $TAG" \
+              --notes-file release-notes.md
+          fi
