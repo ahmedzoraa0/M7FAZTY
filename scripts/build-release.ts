@@ -2,14 +2,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { generateStandaloneHtml } from '../src/templates/standaloneHtmlGenerator';
 import { generateAppsScriptCode } from '../src/templates/appsScriptTemplate';
-import { APP_VERSION, SCRIPT_VERSION, RELEASE_NOTES, normalizeGithubRepo } from '../src/version';
+import {
+  APP_VERSION,
+  DEFAULT_GITHUB_REPO,
+  RELEASE_NOTES,
+  SCRIPT_VERSION,
+  normalizeGithubRepo,
+} from '../src/version';
 
 const rootDir = process.cwd();
 const outDir = path.join(rootDir, 'releases');
 fs.mkdirSync(outDir, { recursive: true });
 
 // Automatically picks up GITHUB_REPOSITORY when running inside GitHub Actions (e.g. "owner/repo")
-const githubRepo = normalizeGithubRepo(process.env.GITHUB_REPOSITORY || process.env.M7FAZTY_GITHUB_REPO || '');
+const githubRepo = normalizeGithubRepo(
+  process.env.GITHUB_REPOSITORY || process.env.M7FAZTY_GITHUB_REPO || DEFAULT_GITHUB_REPO
+);
 
 const html = generateStandaloneHtml({
   starterMode: true,

@@ -18,7 +18,7 @@ import {
 import { SheetInspectionReport } from '../types';
 import { generateAppsScriptCode } from '../templates/appsScriptTemplate';
 import { generateStandaloneHtml } from '../templates/standaloneHtmlGenerator';
-import { APP_VERSION, normalizeGithubRepo } from '../version';
+import { APP_VERSION, DEFAULT_GITHUB_REPO, normalizeGithubRepo } from '../version';
 import {
   DriveSheetMatch,
   buildM7faztySheetName,
@@ -86,7 +86,7 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
   const [formatting, setFormatting] = useState(false);
   const [copiedGs, setCopiedGs] = useState(false);
   const [githubRepoInput, setGithubRepoInput] = useState<string>(
-    () => localStorage.getItem('mf_github_repo') || ''
+    () => localStorage.getItem('mf_github_repo') || DEFAULT_GITHUB_REPO
   );
 
   const handleGithubRepoChange = (val: string) => {
