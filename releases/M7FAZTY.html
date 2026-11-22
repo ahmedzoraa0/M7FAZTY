@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="theme-color" content="#f5f0e6">
   <meta name="description" content="لوحة إدارة مالية شخصية للمصروفات والإيرادات والحسابات والمستحقات والالتزامات.">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>M7FAZTY | الإدارة المالية الشخصية</title>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1711'/><path d='M8 12h16M8 16h16M8 20h10' stroke='%23e0bb6a' stroke-width='2' stroke-linecap='round'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@500;700;800&family=Changa:wght@500;700;800&family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Silkscreen:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Mono:wght@500;700&family=Silkscreen:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
   <style>
     /* ===== نظام الثيمات الموحد لكل الشاشات (ألوان + خطوط + أشكال + أيقونات) ===== */
@@ -197,7 +198,7 @@
       --info-bg: #082026;
       --shadow-sm: 0 0 0 1px rgba(51, 255, 102, 0.16);
       --shadow-md: 0 0 18px -8px rgba(51, 255, 102, 0.25);
-      --font-main: "IBM Plex Sans Arabic", "IBM Plex Mono", monospace;
+      --font-main: "IBM Plex Mono", "Tajawal", monospace;
       --font-num: "Silkscreen", "IBM Plex Mono", monospace;
       --radius-card: 2px;
       --radius-btn: 2px;
@@ -245,7 +246,7 @@
       --info-bg: #152e33;
       --shadow-sm: inset -2px -2px 0 rgba(0,0,0,0.4), inset 2px 2px 0 rgba(255,255,255,0.08);
       --shadow-md: inset -3px -3px 0 rgba(0,0,0,0.45), inset 3px 3px 0 rgba(255,255,255,0.1);
-      --font-main: "Cairo", "Tajawal", sans-serif;
+      --font-main: "Tajawal", -apple-system, BlinkMacSystemFont, sans-serif;
       --font-num: "Silkscreen", "IBM Plex Mono", monospace;
       --radius-card: 0px;
       --radius-btn: 0px;
@@ -293,8 +294,8 @@
       --info-bg: #e3effc;
       --shadow-sm: 0 3px 0 rgba(20, 23, 31, 0.85);
       --shadow-md: 0 4px 0 rgba(20, 23, 31, 0.9);
-      --font-main: "Changa", "Cairo", sans-serif;
-      --font-num: "IBM Plex Mono", "Changa", monospace;
+      --font-main: "Tajawal", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-num: "IBM Plex Mono", "Tajawal", monospace;
       --radius-card: 10px;
       --radius-btn: 8px;
       --radius-icon: 50%;
@@ -389,7 +390,7 @@
       --info-bg: #0d2b3a;
       --shadow-sm: 3px 3px 0 rgba(0, 238, 255, 0.18);
       --shadow-md: 4px 4px 0 rgba(255, 78, 205, 0.22);
-      --font-main: "Cairo", "Tajawal", sans-serif;
+      --font-main: "Tajawal", -apple-system, BlinkMacSystemFont, sans-serif;
       --font-num: "Silkscreen", "IBM Plex Mono", monospace;
       --radius-card: 4px;
       --radius-btn: 4px;
@@ -437,7 +438,7 @@
       --info-bg: #e0f2fe;
       --shadow-sm: 0 2px 8px rgba(15, 45, 38, 0.05);
       --shadow-md: 0 10px 24px -12px rgba(15, 45, 38, 0.12);
-      --font-main: "IBM Plex Sans Arabic", "Tajawal", sans-serif;
+      --font-main: "Tajawal", -apple-system, BlinkMacSystemFont, sans-serif;
       --font-num: "IBM Plex Mono", monospace;
       --radius-card: 14px;
       --radius-btn: 10px;
@@ -533,7 +534,7 @@
       --info-bg: #e0f2fe;
       --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
       --shadow-md: 0 8px 20px -12px rgba(15, 23, 42, 0.12);
-      --font-main: "IBM Plex Sans Arabic", "Tajawal", sans-serif;
+      --font-main: "Tajawal", -apple-system, BlinkMacSystemFont, sans-serif;
       --font-num: "IBM Plex Mono", monospace;
       --radius-card: 10px;
       --radius-btn: 8px;
@@ -557,11 +558,25 @@
         radial-gradient(700px 400px at -10% 35%, var(--bg-glow-2), transparent 60%),
         var(--bg);
       color: var(--text);
-      padding: 14px 14px 64px;
+      padding: 14px 14px calc(98px + env(safe-area-inset-bottom, 0px));
       display: flex;
       justify-content: center;
       min-height: 100vh;
       transition: background-color 0.22s ease, color 0.22s ease;
+    }
+
+    :is(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+      outline: 2.5px solid var(--primary-accent);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
     }
 
     .app-container {
@@ -1015,9 +1030,19 @@
     }
     .acc-card:hover { border-color: var(--primary-accent); }
     .acc-card:last-child:nth-child(odd) { grid-column: span 2; }
-    .acc-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .acc-name { font-size: 0.86rem; font-weight: 800; color: var(--text); }
-    .acc-kind { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
+    .acc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+    .acc-name {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .acc-kind { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
     .acc-value { font-size: 1.24rem; font-weight: 800; margin-top: 8px; direction: ltr; text-align: right; display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; font-variant-numeric: tabular-nums; }
     .acc-value.is-masked { letter-spacing: 3px; font-size: 1.1rem; color: var(--text-muted); }
     .acc-value.is-negative { color: var(--expense); }
@@ -1102,19 +1127,22 @@
     .amount-box input { font-size: 1.55rem; font-weight: 800; padding-left: 60px; font-variant-numeric: tabular-nums; }
     .amount-box .curr-badge { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 800; color: var(--text-muted); }
 
-    .chips-row { display: flex; gap: 6px; margin-top: -4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
-    .chips-row::-webkit-scrollbar { display: none; }
+    .chips-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: -4px; margin-bottom: 14px; }
+    @media (min-width: 560px) {
+      .chips-row { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+    }
     .chip {
       background: var(--surface-soft);
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 9px;
-      padding: 7px 11px;
-      font-size: 0.82rem;
+      min-height: 38px;
+      padding: 7px 6px;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
-      flex-shrink: 0;
+      text-align: center;
     }
 
     .dual-cols { display: flex; gap: 10px; }
@@ -1652,8 +1680,8 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="sync-status" id="connectionState" aria-live="polite"><span class="sync-dot"></span><span id="connectionLabel">جارٍ الاتصال</span></div>
-      <button type="button" class="icon-btn" title="تحديث البيانات" onclick="fetchData()">
+      <div class="sync-status offline" id="connectionState" aria-live="polite"><span class="sync-dot"></span><span id="connectionLabel">غير متصل</span></div>
+      <button type="button" class="icon-btn" title="تحديث البيانات" aria-label="تحديث البيانات" onclick="fetchData()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 4 23 10 17 10"></polyline>
           <polyline points="1 20 1 14 7 14"></polyline>
@@ -1671,18 +1699,32 @@
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       <button type="button" class="action-link-btn" id="bannerApplyUpdateBtn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:8px 14px;" onclick="applyGithubUpdate()">تحديث الملف الآن</button>
-      <button type="button" class="btn-secondary" style="padding:6px 10px;" onclick="dismissUpdateBanner()" title="إخفاء مؤقتاً">✕</button>
+      <button type="button" class="btn-secondary" style="padding:6px 10px;" onclick="dismissUpdateBanner()" title="إخفاء مؤقتاً" aria-label="إخفاء إشعار التحديث">✕</button>
     </div>
   </div>
 
   <!-- ================= TAB 1: الرئيسية ================= -->
   <div class="tab-content active" id="tabHome">
     <div class="setup-banner" id="unlinkedBanner" style="grid-column: 1 / -1;">
-      <div>
-        <div style="font-size:0.9rem;font-weight:800;">مرحباً بك في M7FAZTY! التطبيق غير مربوط بشيت جوجل بعد</div>
-        <div style="font-size:0.76rem;color:var(--text-muted);margin-top:2px;">سجّل اسمك أولاً للتحقق من وجود شيت M7FAZTY أو إنشاء وربط شيت جديد في خطوات بسيطة</div>
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:0.92rem;font-weight:800;">مرحباً بك في M7FAZTY — التطبيق غير مربوط بشيت جوجل بعد</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;line-height:1.55;">ابدأ بربط شيت Google Sheets الخاص بك في خطوات بسيطة، أو جرّب التطبيق أولاً ببيانات افتراضية معزولة تماماً بدون أي اتصال بالشبكة.</div>
       </div>
-      <button type="button" class="action-link-btn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:9px 14px;" onclick="switchNavTab('setup')">ابدأ معالج الربط الآن ←</button>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <button type="button" class="action-link-btn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:9px 14px;min-height:40px;" onclick="switchNavTab('setup')">ربط شيت Google Sheets الآن ←</button>
+        <button type="button" class="btn-secondary" style="min-height:40px;" onclick="enterDemoMode()">تشغيل وضع التجربة (بيانات افتراضية)</button>
+      </div>
+    </div>
+
+    <div class="setup-banner" id="demoModeBanner" style="grid-column: 1 / -1;border-color:var(--warning);background:var(--warning-bg);">
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:0.88rem;font-weight:800;color:var(--warning);">وضع التجربة المبدئي مُفعّل — بيانات افتراضية تماماً</div>
+        <div style="font-size:0.76rem;color:var(--text);margin-top:2px;">جميع الحسابات والأرقام هنا وهمية للمعاينة فقط، ولا يتم إرسال أو حفظ أي شيء على Google Sheets.</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" class="action-link-btn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:8px 12px;" onclick="exitDemoMode();switchNavTab('setup');">ربط شيت حقيقي</button>
+        <button type="button" class="btn-secondary" onclick="exitDemoMode()">إنهاء التجربة</button>
+      </div>
     </div>
 
     <div class="stat-card" id="totalCard" onclick="toggleGlobalPrivacy()">
@@ -2250,6 +2292,7 @@
           <div class="setting-info">
             <div class="setting-title">رمز PIN الحماية (اختياري)</div>
             <div class="setting-desc" id="pinStatusDesc">غير مُفعّل — يمكنك تعيين رمز من 4 أرقام</div>
+            <div class="setting-desc" style="color:var(--warning);margin-top:3px;">تنبيه أمان: رمز PIN هو قفل للواجهة على هذا المتصفح فقط وليس تشفيراً للبيانات، ويمكن تجاوزه عبر أدوات المطورين.</div>
           </div>
         </div>
         <div class="setting-actions">
@@ -2432,7 +2475,7 @@
   const SCRIPT_VERSION = "2.1.0";
   const BAKED_CONFIG = /*__MF_CONFIG_BEGIN__*/{"scriptUrl":"","spreadsheetId":"","apiToken":"","profileName":"","githubRepo":"ahmedzoraa0/M7FAZTY"}/*__MF_CONFIG_END__*/;
   const APPS_SCRIPT_CODE = "// ============================================================================\n// M7FAZTY - Google Apps Script المحدّث (v11)\n// يدعم:\n// 1. القراءة والكتابة الديناميكية للأرصدة والمحافظ (عدد غير محدود من الحسابات)\n// 2. إضافة محفظة / بنك / خزنة جديدة من التطبيق مباشرة مع تحديث معادلات SUMIFS والقوائم\n// 3. إضافة تصنيفات صرف وقبض جديدة مع إصلاح معادلة E2 ومنع #REF! والتكرار\n// 4. قائمة داخل الشيت لتنسيق وتظبيط الجداول والقوائم بضغطة واحدة (setupAndFormatWorkbook)\n// ============================================================================\n\nconst TOKEN = \"\";\nconst TX_SHEET = \"المعاملات اليومية\";\nconst SETTINGS_SHEET = \"القوائم والإعدادات\";\nconst DEBTS_SHEET = \"المستحقات\";\nconst REMINDERS_SHEET = \"التنبيهات والالتزامات\";\nconst LOG_SHEET = \"__API_Log\";\nconst MAX_ROWS = 600;\nconst TYPES = [\"صرف\", \"قبض\", \"تحويل بين حسابات\"];\n\nfunction onOpen() {\n  SpreadsheetApp.getUi()\n    .createMenu(\"💰 أدوات M7FAZTY\")\n    .addItem(\"تنسيق وتظبيط الشيت والقوائم بالكامل\", \"setupAndFormatWorkbook\")\n    .addItem(\"تحديث معادلات الأرصدة وقوائم التحقق\", \"refreshFormulasAndValidationsMenu\")\n    .addToUi();\n}\n\nfunction out_(obj, cb) {\n  const json = JSON.stringify(obj);\n  if (cb) {\n    return ContentService.createTextOutput(cb + \"(\" + json + \")\")\n      .setMimeType(ContentService.MimeType.JAVASCRIPT);\n  }\n  return ContentService.createTextOutput(json)\n    .setMimeType(ContentService.MimeType.JSON);\n}\n\nconst num_ = v => Number(String(v || \"\").replace(/٫/g, \".\").replace(/[^0-9.-]/g, \"\")) || 0;\nconst fp_ = (type, amount, desc) => [String(type).trim(), num_(amount), String(desc).trim()].join(\"|\");\nconst ACCOUNT_KINDS = [\"محفظة\", \"بنك\", \"خزنة\", \"بطاقة\", \"أخرى\"];\n\nfunction inferAccountKind_(name) {\n  const n = String(name || \"\").trim().toLowerCase();\n  if (!n) return \"محفظة\";\n  if (/كاش|خزنة|نقد|جيب|cash|safe/.test(n) && !/فودافون|اتصالات|اورنج|وي|vodafone|etisalat|orange/.test(n)) return \"خزنة\";\n  if (/بنك|المشرق|الأهلي|الاهلي|مصر|ادخار|توفير|qnb|cib|hsbc|nbe|bank|mashreq/.test(n)) return \"بنك\";\n  if (/فيزا|ميزة|بطاقة|كارت|ايزي باي|إيزي باي|كريدت|ماستر|visa|master|card|meeza|easypay/.test(n)) return \"بطاقة\";\n  if (/محفظة|فودافون|اتصالات|اورنج|أورنج|وي باي|انستا|إنستا|telda|instapay|wallet|pay/.test(n)) return \"محفظة\";\n  if (/أخرى|اخرى|other/.test(n)) return \"أخرى\";\n  return \"محفظة\";\n}\n\n// اكتشاف صفوف الحسابات وصف الإجمالي وصف بداية المعاملات ديناميكياً\nfunction detectTxLayout_(sheet) {\n  const scanRows = Math.min(Math.max(sheet.getLastRow(), 15), 50);\n  const topVals = sheet.getRange(1, 1, scanRows, 2).getValues();\n  let totalRow = -1;\n  let txHeaderRow = -1;\n  const accountRows = [];\n\n  for (let i = 1; i < topVals.length; i++) {\n    const colA = String(topVals[i][0] || \"\").trim();\n    const colB = String(topVals[i][1] || \"\").trim();\n\n    if (colA === \"التاريخ\" && colB === \"النوع\") {\n      txHeaderRow = i + 1;\n      break;\n    }\n    if (colA === \"الإجمالي\") {\n      totalRow = i + 1;\n      continue;\n    }\n    if (totalRow === -1 && colA && colA !== \"الحساب\" && colA !== \"المحفظة\" && colA !== \"الحساب / المحفظة\") {\n      accountRows.push(i + 1);\n    }\n  }\n\n  if (txHeaderRow === -1) txHeaderRow = (totalRow > 0 ? totalRow + 1 : 10);\n  const firstTxRow = txHeaderRow + 1;\n  if (totalRow === -1) {\n    totalRow = accountRows.length ? accountRows[accountRows.length - 1] + 1 : 9;\n  }\n\n  return {\n    accountRows: accountRows,\n    totalRow: totalRow,\n    txHeaderRow: txHeaderRow,\n    firstTxRow: firstTxRow\n  };\n}\n\n// ==========================================\n// 1. نقطة الدخول للقراءة والكتابة عبر JSONP (doGet)\n// ==========================================\nfunction doGet(e) {\n  const p = (e && e.parameter) || {};\n  const cb = p.callback;\n  if (TOKEN && p.token !== TOKEN) return out_({ status: \"error\", message: \"unauthorized\" }, cb);\n\n  if (p.action === \"ping\") {\n    return out_({ status: \"success\", message: \"Apps Script متصل ويعمل بنجاح ✅\" }, cb);\n  }\n\n  if (p.action || (p.amount && p.type)) {\n    return handleWrite_(p, cb);\n  }\n\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  const sheet = ss.getSheetByName(TX_SHEET);\n  const settingsSheet = ss.getSheetByName(SETTINGS_SHEET);\n  const debtsSheet = ss.getSheetByName(DEBTS_SHEET);\n  const remindersSheet = ss.getSheetByName(REMINDERS_SHEET);\n\n  // أ. قراءة القوائم والأنواع من القوائم والإعدادات\n  const expenseCats = [], incomeCats = [], payMethods = [], kindMap = {};\n  if (settingsSheet && settingsSheet.getLastRow() >= 2) {\n    const s = settingsSheet.getDataRange().getValues();\n    for (let i = 1; i < s.length; i++) {\n      if (s[i][1]) expenseCats.push(String(s[i][1]).trim());\n      if (s[i][2]) incomeCats.push(String(s[i][2]).trim());\n      if (s[i][3]) {\n        const accName = String(s[i][3]).trim();\n        payMethods.push(accName);\n        if (s[i][5]) kindMap[accName] = String(s[i][5]).trim();\n      }\n    }\n  }\n\n  // ب. قراءة أرصدة الحسابات ديناميكياً (بدون حد 7 صفوف)\n  const layout = detectTxLayout_(sheet);\n  const accounts = [];\n  if (layout.accountRows.length > 0) {\n    const startAcc = layout.accountRows[0];\n    const endAcc = layout.accountRows[layout.accountRows.length - 1];\n    const accVals = sheet.getRange(startAcc, 1, endAcc - startAcc + 1, 5).getValues();\n    accVals.forEach((r, idx) => {\n      const name = String(r[0]).trim();\n      if (!name || name === \"الإجمالي\") return;\n      accounts.push({\n        row: startAcc + idx,\n        name: name,\n        kind: kindMap[name] || inferAccountKind_(name),\n        opening: num_(r[1]),\n        incoming: num_(r[2]),\n        outgoing: num_(r[3]),\n        current: num_(r[4])\n      });\n    });\n  }\n\n  // ج. قراءة آخر المعاملات المالية\n  let recent = [];\n  const lastRow = sheet.getLastRow();\n  if (lastRow >= layout.firstTxRow) {\n    const startRow = Math.max(layout.firstTxRow, lastRow - MAX_ROWS + 1);\n    const values = sheet.getRange(startRow, 1, lastRow - startRow + 1, 8).getValues();\n    recent = values.map((r, i) => ({\n      row: startRow + i,\n      date: r[0] instanceof Date ? Utilities.formatDate(r[0], Session.getScriptTimeZone(), \"yyyy-MM-dd\") : String(r[0]).trim(),\n      type: String(r[1]).trim(),\n      category: String(r[2]).trim(),\n      desc: String(r[3]).trim(),\n      fromAcc: String(r[4]).trim(),\n      toAcc: String(r[5]).trim(),\n      amount: num_(r[6]),\n      notes: String(r[7]).trim()\n    })).filter(t => t.amount > 0 && t.type !== \"النوع\").reverse();\n  }\n\n  // د. قراءة المستحقات\n  let debts = [];\n  if (debtsSheet && debtsSheet.getLastRow() >= 2) {\n    const dValues = debtsSheet.getRange(2, 1, debtsSheet.getLastRow() - 1, 7).getValues();\n    debts = dValues.map((r, i) => ({\n      row: i + 2,\n      id: String(r[0]),\n      date: r[1] instanceof Date ? Utilities.formatDate(r[1], Session.getScriptTimeZone(), \"yyyy-MM-dd\") : String(r[1]).trim(),\n      type: String(r[2]).trim(),\n      desc: String(r[3]).trim(),\n      amount: num_(r[4]),\n      status: String(r[5]).trim() || \"مستحق\",\n      notes: String(r[6]).trim()\n    })).filter(d => d.desc || d.amount > 0).reverse();\n  }\n\n  // هـ. قراءة التنبيهات والالتزامات\n  let reminders = [];\n  if (remindersSheet && remindersSheet.getLastRow() >= 2) {\n    const remValues = remindersSheet.getRange(2, 1, remindersSheet.getLastRow() - 1, 7).getValues();\n    reminders = remValues.map((r, i) => ({\n      row: i + 2,\n      id: String(r[0]),\n      dueDate: r[1] instanceof Date ? Utilities.formatDate(r[1], Session.getScriptTimeZone(), \"yyyy-MM-dd\") : String(r[1]).trim(),\n      desc: String(r[2]).trim(),\n      amount: num_(r[3]),\n      repeat: String(r[4]).trim() || \"شهري\",\n      status: String(r[5]).trim() || \"قادم\",\n      notes: String(r[6]).trim()\n    })).filter(rem => rem.desc || rem.amount > 0);\n  }\n\n  const finalPayMethods = payMethods.length ? payMethods : accounts.map(a => a.name);\n\n  return out_({\n    status: \"success\",\n    spreadsheetId: ss.getId(),\n    spreadsheetTitle: ss.getName(),\n    accounts: accounts,\n    categories: { expense: [...new Set(expenseCats)], income: [...new Set(incomeCats)] },\n    paymentMethods: [...new Set(finalPayMethods)],\n    recent: recent,\n    debts: debts,\n    reminders: reminders\n  }, cb);\n}\n\n// ==========================================\n// 2. نقطة الدخول للكتابة عبر POST (doPost)\n// ==========================================\nfunction doPost(e) {\n  const p = (e && e.parameter) || {};\n  if (TOKEN && p.token !== TOKEN) return out_({ status: \"error\", message: \"unauthorized\" });\n  return handleWrite_(p, null);\n}\n\n// ==========================================\n// 3. معالج عمليات الكتابة والتعديل والحذف الموحد\n// ==========================================\nfunction handleWrite_(p, cb) {\n  const lock = LockService.getScriptLock();\n  let locked = false;\n  try {\n    lock.waitLock(10000);\n    locked = true;\n\n    const ss = SpreadsheetApp.getActiveSpreadsheet();\n    const reqId = String(p.requestId || \"\").trim();\n\n    let logSheet = ss.getSheetByName(LOG_SHEET);\n    if (!logSheet) {\n      logSheet = ss.insertSheet(LOG_SHEET);\n      logSheet.appendRow([\"Request ID\", \"Created At\", \"Response JSON\"]);\n      logSheet.hideSheet();\n    }\n    if (reqId && logSheet.getLastRow() >= 2) {\n      const logRows = logSheet.getRange(2, 1, logSheet.getLastRow() - 1, 3).getValues();\n      for (let i = logRows.length - 1; i >= 0; i--) {\n        if (String(logRows[i][0]).trim() === reqId) {\n          const prev = JSON.parse(String(logRows[i][2]));\n          return out_(prev, cb);\n        }\n      }\n    }\n\n    const action = p.action || \"add\";\n    let responseObj = { status: \"success\" };\n\n    // 1. إضافة حساب / محفظة / بنك / خزنة جديدة وربطها بالشيت والمعادلات والقوائم\n    if (action === \"add_account\") {\n      const accName = String(p.accountName || \"\").trim();\n      const accKind = String(p.accountKind || \"محفظة\").trim();\n      const opening = num_(p.openingBalance);\n      if (!accName) throw new Error(\"اسم المحفظة أو الحساب فارغ\");\n\n      const sheet = ss.getSheetByName(TX_SHEET);\n      const sSheet = ss.getSheetByName(SETTINGS_SHEET);\n      const layout = detectTxLayout_(sheet);\n\n      // التحقق من عدم التكرار\n      if (layout.accountRows.length > 0) {\n        const existingNames = sheet.getRange(layout.accountRows[0], 1, layout.accountRows.length, 1)\n          .getValues().map(r => String(r[0]).trim());\n        if (existingNames.indexOf(accName) !== -1) {\n          throw new Error(\"الحساب موجود بالفعل في الشيت\");\n        }\n      }\n\n      // إدراج صف جديد قبل صف \"الإجمالي\"\n      sheet.insertRowBefore(layout.totalRow);\n      const newAccRow = layout.totalRow;\n      const newTotalRow = layout.totalRow + 1;\n      const newFirstTxRow = layout.firstTxRow + 1;\n\n      sheet.getRange(newAccRow, 1, 1, 2).setValues([[accName, opening]]);\n      sheet.getRange(newAccRow, 2, 1, 4).setNumberFormat(\"#,##0.00\");\n\n      // تحديث معادلات كل الحسابات وصف الإجمالي بحيث تشير إلى newFirstTxRow\n      refreshSummaryFormulas_(sheet, 2, newTotalRow - 1, newTotalRow, newFirstTxRow);\n\n      // إضافة الحساب إلى ورقة القوائم والإعدادات (العمود D لطرق الدفع، والعمود F لنوع الحساب)\n      const maxS = Math.max(sSheet.getLastRow(), 2);\n      const dVals = sSheet.getRange(2, 4, maxS - 1, 1).getValues().map(r => String(r[0]).trim());\n      if (dVals.indexOf(accName) === -1) {\n        let targetRow = 2;\n        for (let i = 0; i < dVals.length; i++) {\n          if (dVals[i] !== \"\") targetRow = i + 3;\n          else { targetRow = i + 2; break; }\n        }\n        sSheet.getRange(targetRow, 4).setValue(accName);\n        sSheet.getRange(targetRow, 6).setValue(accKind);\n      }\n\n      applyTxValidations_(sheet, sSheet, newFirstTxRow);\n      responseObj = { status: \"success\", account: accName, kind: accKind, opening: opening };\n    }\n\n    // 1.5. تعديل نوع حساب (محفظة / بنك / خزنة / بطاقة / أخرى) في عمود F من ورقة القوائم والإعدادات بأمان\n    else if (action === \"update_account_kind\") {\n      const accName = String(p.accountName || \"\").trim();\n      const accKind = String(p.accountKind || \"\").trim();\n      if (!accName) throw new Error(\"اسم الحساب فارغ\");\n      if (ACCOUNT_KINDS.indexOf(accKind) === -1) throw new Error(\"نوع الحساب غير صحيح\");\n\n      const sSheet = ss.getSheetByName(SETTINGS_SHEET);\n      const maxS = Math.max(sSheet.getLastRow(), 2);\n      const dVals = sSheet.getRange(2, 4, maxS - 1, 1).getValues().map(r => String(r[0] || \"\").trim());\n      const existingIdx = dVals.indexOf(accName);\n      if (existingIdx !== -1) {\n        sSheet.getRange(existingIdx + 2, 6).setValue(accKind);\n      } else {\n        let targetRow = 2;\n        for (let i = 0; i < dVals.length; i++) {\n          if (dVals[i] !== \"\") targetRow = i + 3;\n          else { targetRow = i + 2; break; }\n        }\n        sSheet.getRange(targetRow, 4).setValue(accName);\n        sSheet.getRange(targetRow, 6).setValue(accKind);\n      }\n      responseObj = { status: \"success\", account: accName, kind: accKind };\n    }\n\n    // 2. إضافة تصنيف جديد في ورقة \"القوائم والإعدادات\"\n    else if (action === \"add_category\") {\n      const catName = String(p.categoryName || \"\").trim();\n      const catType = String(p.catType || \"صرف\").trim();\n      if (!catName) throw new Error(\"اسم التصنيف فارغ\");\n\n      const sSheet = ss.getSheetByName(SETTINGS_SHEET);\n      const txSheet = ss.getSheetByName(TX_SHEET);\n      const colIdx = catType === \"قبض\" ? 3 : 2;\n      const maxR = Math.max(sSheet.getLastRow(), 2);\n      const colVals = sSheet.getRange(2, colIdx, maxR - 1, 1).getValues().map(r => String(r[0]).trim());\n\n      if (colVals.indexOf(catName) === -1) {\n        let targetRow = 2;\n        for (let i = 0; i < colVals.length; i++) {\n          if (colVals[i] !== \"\") targetRow = i + 3;\n          else { targetRow = i + 2; break; }\n        }\n        sSheet.getRange(targetRow, colIdx).setValue(catName);\n      }\n\n      const e2Formula = String(sSheet.getRange(\"E2\").getFormula() || \"\");\n      const e2Display = String(sSheet.getRange(\"E2\").getDisplayValue() || \"\");\n      if (!e2Formula || e2Formula.indexOf(\"B2:B500\") === -1 || e2Display.indexOf(\"#\") === 0) {\n        sSheet.getRange(\"E2:E500\").clearContent();\n        sSheet.getRange(\"E2\").setFormula('=IFERROR(UNIQUE(FILTER({B2:B500;C2:C500}, {B2:B500;C2:C500}<>\"\")), \"\")');\n      }\n\n      const layout = detectTxLayout_(txSheet);\n      applyTxValidations_(txSheet, sSheet, layout.firstTxRow);\n      responseObj = { status: \"success\", category: catName, catType: catType };\n    }\n\n    // 3. تظبيط وتنسيق الشيت بالكامل عن بُعد\n    else if (action === \"setup_sheet\") {\n      const desiredName = String(p.sheetName || \"\").trim();\n      const curName = String(ss.getName() || \"\").trim();\n      if (desiredName && (p.forceRename === \"1\" || curName.indexOf(\"Untitled\") !== -1 || curName.indexOf(\"بلا عنوان\") !== -1)) {\n        ss.rename(desiredName);\n      }\n      setupAndFormatWorkbook();\n      responseObj = {\n        status: \"success\",\n        spreadsheetId: ss.getId(),\n        spreadsheetTitle: ss.getName(),\n        message: \"تم تنسيق الشيت والقوائم بنجاح\"\n      };\n    }\n\n    // 4. إجراءات المستحقات\n    else if (action === \"add_debt\") {\n      const dSheet = ss.getSheetByName(DEBTS_SHEET);\n      const newId = p.id || (\"D-\" + Date.now());\n      dSheet.appendRow([newId, p.date, p.type, p.desc, num_(p.amount), p.status || \"مستحق\", p.notes || \"\"]);\n      responseObj = { status: \"success\", id: newId };\n    }\n    else if (action === \"update_debt_status\") {\n      const dSheet = ss.getSheetByName(DEBTS_SHEET);\n      const targetRow = findRowByIdOrIndex_(dSheet, p.id, p.row);\n      if (targetRow >= 2) dSheet.getRange(targetRow, 6).setValue(p.status);\n    }\n    else if (action === \"delete_debt\") {\n      const dSheet = ss.getSheetByName(DEBTS_SHEET);\n      const targetRow = findRowByIdOrIndex_(dSheet, p.id, p.row);\n      if (targetRow >= 2) dSheet.deleteRow(targetRow);\n    }\n\n    // 5. إجراءات التنبيهات والالتزامات\n    else if (action === \"add_reminder\") {\n      const remSheet = ss.getSheetByName(REMINDERS_SHEET);\n      const newId = p.id || (\"R-\" + Date.now());\n      remSheet.appendRow([newId, p.dueDate, p.desc, num_(p.amount), p.repeat || \"شهري\", p.status || \"قادم\", p.notes || \"\"]);\n      responseObj = { status: \"success\", id: newId };\n    }\n    else if (action === \"update_reminder_status\") {\n      const remSheet = ss.getSheetByName(REMINDERS_SHEET);\n      const targetRow = findRowByIdOrIndex_(remSheet, p.id, p.row);\n      if (targetRow >= 2) remSheet.getRange(targetRow, 6).setValue(p.status);\n    }\n    else if (action === \"delete_reminder\") {\n      const remSheet = ss.getSheetByName(REMINDERS_SHEET);\n      const targetRow = findRowByIdOrIndex_(remSheet, p.id, p.row);\n      if (targetRow >= 2) remSheet.deleteRow(targetRow);\n    }\n\n    // 6. إجراءات المعاملات اليومية\n    else {\n      const sheet = ss.getSheetByName(TX_SHEET);\n      const layout = detectTxLayout_(sheet);\n      const rowValues = () => {\n        if (TYPES.indexOf(p.type) === -1) throw new Error(\"نوع الحركة غير صحيح\");\n        if (!(Number(p.amount) > 0)) throw new Error(\"المبلغ يجب أن يكون أكبر من صفر\");\n        return [p.date, p.type, p.category, p.description, p.fromAccount, p.toAccount || \"\", Number(p.amount)];\n      };\n\n      if (action === \"add\") {\n        sheet.appendRow(rowValues().concat([p.notes || \"\"]));\n      } else if (action === \"update\" || action === \"delete\") {\n        const row = Number(p.row);\n        if (!(row >= layout.firstTxRow) || row > sheet.getLastRow()) throw new Error(\"رقم الصف غير صحيح\");\n        const cur = sheet.getRange(row, 1, 1, 8).getValues()[0];\n        if (p.fp && fp_(cur[1], cur[6], cur[3]) !== p.fp) {\n          throw new Error(\"الصف تغير في الشيت، حدّث التطبيق وحاول مرة أخرى\");\n        }\n        if (action === \"delete\") sheet.deleteRow(row);\n        else sheet.getRange(row, 1, 1, 8).setValues([rowValues().concat([cur[7]])]);\n      } else {\n        throw new Error(\"أمر غير معروف: \" + action);\n      }\n    }\n\n    if (reqId) {\n      logSheet.appendRow([reqId, new Date(), JSON.stringify(responseObj)]);\n    }\n    return out_(responseObj, cb);\n\n  } catch (err) {\n    return out_({ status: \"error\", message: err.toString() }, cb);\n  } finally {\n    if (locked) lock.releaseLock();\n  }\n}\n\nfunction refreshSummaryFormulas_(sheet, firstAccRow, lastAccRow, totalRow, firstTxRow) {\n  if (lastAccRow >= firstAccRow) {\n    const formulas = [];\n    for (let r = firstAccRow; r <= lastAccRow; r++) {\n      formulas.push([\n        `=SUMIFS($G$${firstTxRow}:$G,$B$${firstTxRow}:$B,\"قبض\",$E$${firstTxRow}:$E,A${r})+SUMIFS($G$${firstTxRow}:$G,$B$${firstTxRow}:$B,\"دخل\",$E$${firstTxRow}:$E,A${r})+SUMIFS($G$${firstTxRow}:$G,$B$${firstTxRow}:$B,\"تحويل*\",$F$${firstTxRow}:$F,A${r})`,\n        `=SUMIFS($G$${firstTxRow}:$G,$B$${firstTxRow}:$B,\"صرف\",$E$${firstTxRow}:$E,A${r})+SUMIFS($G$${firstTxRow}:$G,$B$${firstTxRow}:$B,\"تحويل*\",$E$${firstTxRow}:$E,A${r})`,\n        `=B${r}+C${r}-D${r}`\n      ]);\n    }\n    sheet.getRange(firstAccRow, 3, lastAccRow - firstAccRow + 1, 3).setFormulas(formulas);\n\n    sheet.getRange(totalRow, 1).setValue(\"الإجمالي\");\n    sheet.getRange(totalRow, 2, 1, 4).setFormulas([[\n      `=SUM(B${firstAccRow}:B${lastAccRow})`,\n      `=SUM(C${firstAccRow}:C${lastAccRow})`,\n      `=SUM(D${firstAccRow}:D${lastAccRow})`,\n      `=SUM(E${firstAccRow}:E${lastAccRow})`\n    ]]);\n  }\n}\n\nfunction applyTxValidations_(txSheet, settingsSheet, firstTxRow) {\n  const maxTxRows = Math.max(txSheet.getMaxRows() - firstTxRow + 1, 200);\n  const typeRule = SpreadsheetApp.newDataValidation().requireValueInList(TYPES, true).setAllowInvalid(true).build();\n  txSheet.getRange(firstTxRow, 2, maxTxRows, 1).setDataValidation(typeRule);\n\n  const catRule = SpreadsheetApp.newDataValidation()\n    .requireValueInRange(settingsSheet.getRange(\"E2:E500\"), true)\n    .setAllowInvalid(true)\n    .build();\n  txSheet.getRange(firstTxRow, 3, maxTxRows, 1).setDataValidation(catRule);\n\n  const accRule = SpreadsheetApp.newDataValidation()\n    .requireValueInRange(settingsSheet.getRange(\"D2:D500\"), true)\n    .setAllowInvalid(true)\n    .build();\n  txSheet.getRange(firstTxRow, 5, maxTxRows, 2).setDataValidation(accRule);\n\n  const kindRule = SpreadsheetApp.newDataValidation()\n    .requireValueInList(ACCOUNT_KINDS, true)\n    .setAllowInvalid(true)\n    .build();\n  settingsSheet.getRange(\"F2:F500\").setDataValidation(kindRule);\n}\n\nfunction refreshFormulasAndValidationsMenu() {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  const txSheet = ss.getSheetByName(TX_SHEET);\n  const sSheet = ss.getSheetByName(SETTINGS_SHEET);\n  const layout = detectTxLayout_(txSheet);\n  if (layout.accountRows.length > 0) {\n    refreshSummaryFormulas_(\n      txSheet,\n      layout.accountRows[0],\n      layout.accountRows[layout.accountRows.length - 1],\n      layout.totalRow,\n      layout.firstTxRow\n    );\n  }\n  applyTxValidations_(txSheet, sSheet, layout.firstTxRow);\n  SpreadsheetApp.getUi().alert(\"تم تحديث المعادلات والقوائم المنسدلة بنجاح ✅\");\n}\n\n// ==========================================\n// 4. أداة تظبيط وتنسيق ملف الإكسيل بالكامل (وتأسيس شيت جديد من الصفر)\n// ==========================================\nfunction setupAndFormatWorkbook() {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  const getOrCreate = (name) => ss.getSheetByName(name) || ss.insertSheet(name);\n\n  const txSheet = getOrCreate(TX_SHEET);\n  const sSheet = getOrCreate(SETTINGS_SHEET);\n  const dSheet = getOrCreate(DEBTS_SHEET);\n  const rSheet = getOrCreate(REMINDERS_SHEET);\n\n  // إزالة الورقة الافتراضية الفارغة إن وُجدت في شيت جديد\n  [\"Sheet1\", \"ورقة1\", \"ورقة 1\"].forEach(defName => {\n    const sh = ss.getSheetByName(defName);\n    if (sh && sh.getLastRow() === 0 && ss.getSheets().length > 1) {\n      ss.deleteSheet(sh);\n    }\n  });\n\n  [txSheet, sSheet, dSheet, rSheet].forEach(sh => sh.setRightToLeft(true));\n\n  let layout = detectTxLayout_(txSheet);\n\n  // إذا كان الشيت جديداً تماماً بدون حسابات، نُنشئ حسابات مبدئية متكاملة\n  if (layout.accountRows.length === 0) {\n    txSheet.getRange(\"A1:E1\").setValues([[\"الحساب / المحفظة\", \"الرصيد الافتتاحي\", \"إجمالي الداخل\", \"إجمالي الخارج\", \"الرصيد الحالي\"]]);\n    txSheet.getRange(\"A2:B4\").setValues([\n      [\"كاش\", 0],\n      [\"محفظة إلكترونية\", 0],\n      [\"حساب بنكي\", 0]\n    ]);\n    txSheet.getRange(\"A5\").setValue(\"الإجمالي\");\n    txSheet.getRange(\"A7:H7\").setValues([[\"التاريخ\", \"النوع\", \"التصنيف\", \"البيان / الوصف\", \"من حساب\", \"إلى حساب\", \"المبلغ\", \"ملاحظات\"]]);\n    layout = detectTxLayout_(txSheet);\n  }\n\n  // 1. ترويسات ورقة المعاملات اليومية\n  txSheet.getRange(\"A1:E1\")\n    .setValues([[\"الحساب / المحفظة\", \"الرصيد الافتتاحي\", \"إجمالي الداخل\", \"إجمالي الخارج\", \"الرصيد الحالي\"]])\n    .setBackground(\"#1c1711\").setFontColor(\"#f4ede0\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n\n  txSheet.getRange(layout.txHeaderRow, 1, 1, 8)\n    .setValues([[\"التاريخ\", \"النوع\", \"التصنيف\", \"البيان / الوصف\", \"من حساب\", \"إلى حساب\", \"المبلغ\", \"ملاحظات\"]])\n    .setBackground(\"#1c1711\").setFontColor(\"#e0bb6a\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n\n  if (layout.accountRows.length > 0) {\n    const firstA = layout.accountRows[0];\n    const lastA = layout.accountRows[layout.accountRows.length - 1];\n    refreshSummaryFormulas_(txSheet, firstA, lastA, layout.totalRow, layout.firstTxRow);\n    txSheet.getRange(firstA, 1, lastA - firstA + 1, 5)\n      .setBackground(\"#f9f5ec\").setBorder(true, true, true, true, true, true, \"#d6cbb5\", SpreadsheetApp.BorderStyle.SOLID);\n    txSheet.getRange(firstA, 2, lastA - firstA + 1, 4).setNumberFormat(\"#,##0.00\");\n  }\n\n  txSheet.getRange(layout.totalRow, 1, 1, 5)\n    .setBackground(\"#efe0c1\").setFontWeight(\"bold\").setNumberFormat(\"#,##0.00\");\n\n  // 2. ورقة القوائم والإعدادات (تنظيف التصنيفات وإصلاح معادلة E2 بدون #REF!)\n  sSheet.getRange(\"A1:F1\")\n    .setValues([[\"النوع\", \"تصنيفات الصرف\", \"تصنيفات القبض\", \"طرق الدفع والحسابات\", \"كل التصنيفات\", \"نوع الحساب\"]])\n    .setBackground(\"#1c1711\").setFontColor(\"#f4ede0\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n  sSheet.getRange(\"A2:A4\").setValues([[\"صرف\"], [\"قبض\"], [\"تحويل بين حسابات\"]]);\n\n  const rawExpCats = sSheet.getRange(\"B2:B500\").getValues().map(r => String(r[0] || \"\").trim()).filter(Boolean);\n  const rawIncCats = sSheet.getRange(\"C2:C500\").getValues().map(r => String(r[0] || \"\").trim()).filter(Boolean);\n  const cleanExpCats = rawExpCats.length ? [...new Set(rawExpCats)] : [\n    \"مأكولات ومشروبات\", \"مواصلات وبنزين\", \"تسوق ومستلزمات\", \"فواتير شهرية\", \"صحة وأدوية\", \"ترفيه وخروجات\", \"أخرى\"\n  ];\n  const cleanIncCats = rawIncCats.length ? [...new Set(rawIncCats)] : [\n    \"راتب شهري\", \"تصميم\", \"عمل إضافي\", \"أخرى\"\n  ];\n\n  sSheet.getRange(\"B2:B500\").clearContent();\n  sSheet.getRange(\"C2:C500\").clearContent();\n  sSheet.getRange(\"E2:E500\").clearContent();\n\n  sSheet.getRange(2, 2, cleanExpCats.length, 1).setValues(cleanExpCats.map(c => [c]));\n  sSheet.getRange(2, 3, cleanIncCats.length, 1).setValues(cleanIncCats.map(c => [c]));\n\n  const existingDF = sSheet.getRange(\"D2:F500\").getValues();\n  const existingMethods = [];\n  const existingKindMap = {};\n  existingDF.forEach(r => {\n    const nm = String(r[0] || \"\").trim();\n    const kd = String(r[2] || \"\").trim();\n    if (nm) {\n      existingMethods.push(nm);\n      if (kd) existingKindMap[nm] = kd;\n    }\n  });\n  const txAccNames = layout.accountRows.length > 0\n    ? txSheet.getRange(layout.accountRows[0], 1, layout.accountRows.length, 1).getValues().map(r => String(r[0] || \"\").trim()).filter(Boolean)\n    : [\"كاش\", \"محفظة إلكترونية\", \"حساب بنكي\"];\n  const mergedMethods = [...new Set(existingMethods.concat(txAccNames))];\n  if (mergedMethods.length > 0) {\n    sSheet.getRange(2, 4, mergedMethods.length, 1).setValues(mergedMethods.map(m => [m]));\n    sSheet.getRange(2, 6, mergedMethods.length, 1).setValues(mergedMethods.map(m => [existingKindMap[m] || inferAccountKind_(m)]));\n  }\n\n  sSheet.getRange(\"E2\").setFormula('=IFERROR(UNIQUE(FILTER({B2:B500;C2:C500}, {B2:B500;C2:C500}<>\"\")), \"\")');\n  sSheet.setFrozenRows(1);\n\n  // 3. ورقة المستحقات\n  dSheet.getRange(\"A1:G1\")\n    .setValues([[\"المعرف\", \"التاريخ\", \"النوع\", \"الاسم / الجهة\", \"المبلغ\", \"الحالة\", \"ملاحظات\"]])\n    .setBackground(\"#1c1711\").setFontColor(\"#f4ede0\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n  dSheet.setFrozenRows(1);\n  dSheet.getRange(\"E2:E500\").setNumberFormat(\"#,##0.00\");\n\n  // 4. ورقة التنبيهات والالتزامات\n  rSheet.getRange(\"A1:G1\")\n    .setValues([[\"المعرف\", \"تاريخ الاستحقاق\", \"البيان / الالتزام\", \"المبلغ\", \"التكرار\", \"الحالة\", \"ملاحظات\"]])\n    .setBackground(\"#1c1711\").setFontColor(\"#f4ede0\").setFontWeight(\"bold\").setHorizontalAlignment(\"center\");\n  rSheet.setFrozenRows(1);\n  rSheet.getRange(\"D2:D500\").setNumberFormat(\"#,##0.00\");\n\n  // 5. القوائم المنسدلة والتنسيق الشرطي\n  applyTxValidations_(txSheet, sSheet, layout.firstTxRow);\n  txSheet.getRange(layout.firstTxRow, 1, 500, 1).setNumberFormat(\"yyyy-MM-dd\").setHorizontalAlignment(\"center\");\n  txSheet.getRange(layout.firstTxRow, 7, 500, 1).setNumberFormat(\"#,##0.00\").setHorizontalAlignment(\"center\");\n\n  const typeCol = txSheet.getRange(layout.firstTxRow, 2, 500, 1);\n  const rules = [\n    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(\"قبض\").setBackground(\"#e7f5ee\").setFontColor(\"#0f8a5f\").setBold(true).setRanges([typeCol]).build(),\n    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(\"صرف\").setBackground(\"#fbebec\").setFontColor(\"#c43d4b\").setBold(true).setRanges([typeCol]).build(),\n    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo(\"تحويل بين حسابات\").setBackground(\"#efecfb\").setFontColor(\"#6b5bd6\").setBold(true).setRanges([typeCol]).build()\n  ];\n  txSheet.setConditionalFormatRules(rules);\n\n  [txSheet, sSheet, dSheet, rSheet].forEach(sh => sh.autoResizeColumns(1, 8));\n}\n\nfunction findRowByIdOrIndex_(sheet, id, fallbackRow) {\n  const cleanId = String(id || \"\").trim();\n  if (cleanId && sheet.getLastRow() >= 2) {\n    const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();\n    for (let i = 0; i < ids.length; i++) {\n      if (String(ids[i][0]).trim() === cleanId) return i + 2;\n    }\n  }\n  const r = Number(fallbackRow);\n  return (r >= 2 && r <= sheet.getLastRow()) ? r : -1;\n}\n";
-  const THEME_LIST = [{"id":"ivory-gold","name":"عاجي ذهبي","subtitle":"حديث دافئ","badge":"حديث","styleVariant":"modern","isDark":false,"swatches":["#f5f0e6","#fffdf8","#b8862f"],"metaTheme":"#f5f0e6","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"12px"},{"id":"obsidian-gold","name":"أوبسيديان","subtitle":"داكن فخم","badge":"داكن","styleVariant":"modern","isDark":true,"swatches":["#0e0c0a","#171410","#e0bb6a"],"metaTheme":"#0e0c0a","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"12px"},{"id":"retro-crt","name":"كمبيوتر قديم","subtitle":"شاشة CRT خضراء","badge":"ريترو","styleVariant":"crt","isDark":true,"swatches":["#040c04","#081808","#33ff66"],"metaTheme":"#030a03","fontMain":"\"IBM Plex Sans Arabic\", \"IBM Plex Mono\", monospace","radiusBtn":"2px"},{"id":"minecraft","name":"ماينكرافت","subtitle":"مكعبات وبكسل","badge":"بكسل","styleVariant":"minecraft","isDark":true,"swatches":["#2b2620","#5d4027","#5cb838"],"metaTheme":"#1c1814","fontMain":"\"Cairo\", \"Tajawal\", sans-serif","radiusBtn":"0px"},{"id":"lego","name":"ليجو","subtitle":"قطع ملونة مجسّمة","badge":"مكعب","styleVariant":"lego","isDark":false,"swatches":["#f5f3ec","#d01012","#f5cd2f"],"metaTheme":"#f4f2ea","fontMain":"\"Changa\", \"Cairo\", sans-serif","radiusBtn":"8px"},{"id":"classic-heritage","name":"كلاسيك تراثي","subtitle":"دفتر وخط نسخي","badge":"كلاسيك","styleVariant":"classic","isDark":false,"swatches":["#efe7d6","#fbf7ee","#6b2737"],"metaTheme":"#efe7d6","fontMain":"\"Amiri\", \"Tajawal\", Georgia, serif","radiusBtn":"3px"},{"id":"vapor-arcade","name":"آركيد 8-Bit","subtitle":"ألعاب التسعينات","badge":"ألعاب","styleVariant":"arcade","isDark":true,"swatches":["#120a24","#1f123d","#ff4ecd"],"metaTheme":"#100821","fontMain":"\"Cairo\", \"Tajawal\", sans-serif","radiusBtn":"4px"},{"id":"emerald-mint","name":"زمردي مالي","subtitle":"فاتح منعش","badge":"مالي","styleVariant":"minimal","isDark":false,"swatches":["#f2f7f5","#ffffff","#0d9488"],"metaTheme":"#f2f7f5","fontMain":"\"IBM Plex Sans Arabic\", \"Tajawal\", sans-serif","radiusBtn":"10px"},{"id":"midnight-navy","name":"أطلسي بحري","subtitle":"أزرق عميق","badge":"ليلي","styleVariant":"modern","isDark":true,"swatches":["#090f1c","#111a2e","#38bdf8"],"metaTheme":"#090f1c","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"12px"},{"id":"nordic-clean","name":"نورديك ناصع","subtitle":"عملي وبسيط","badge":"سويسري","styleVariant":"minimal","isDark":false,"swatches":["#f4f6fa","#ffffff","#2563eb"],"metaTheme":"#f4f6fa","fontMain":"\"IBM Plex Sans Arabic\", \"Tajawal\", sans-serif","radiusBtn":"8px"}];
+  const THEME_LIST = [{"id":"ivory-gold","name":"عاجي ذهبي","subtitle":"حديث دافئ","badge":"حديث","styleVariant":"modern","isDark":false,"swatches":["#f5f0e6","#fffdf8","#b8862f"],"metaTheme":"#f5f0e6","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"12px"},{"id":"obsidian-gold","name":"أوبسيديان","subtitle":"داكن فخم","badge":"داكن","styleVariant":"modern","isDark":true,"swatches":["#0e0c0a","#171410","#e0bb6a"],"metaTheme":"#0e0c0a","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"12px"},{"id":"retro-crt","name":"كمبيوتر قديم","subtitle":"شاشة CRT خضراء","badge":"ريترو","styleVariant":"crt","isDark":true,"swatches":["#040c04","#081808","#33ff66"],"metaTheme":"#030a03","fontMain":"\"IBM Plex Mono\", \"Tajawal\", monospace","radiusBtn":"2px"},{"id":"minecraft","name":"ماينكرافت","subtitle":"مكعبات وبكسل","badge":"بكسل","styleVariant":"minecraft","isDark":true,"swatches":["#2b2620","#5d4027","#5cb838"],"metaTheme":"#1c1814","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"0px"},{"id":"lego","name":"ليجو","subtitle":"قطع ملونة مجسّمة","badge":"مكعب","styleVariant":"lego","isDark":false,"swatches":["#f5f3ec","#d01012","#f5cd2f"],"metaTheme":"#f4f2ea","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"8px"},{"id":"classic-heritage","name":"كلاسيك تراثي","subtitle":"دفتر وخط نسخي","badge":"كلاسيك","styleVariant":"classic","isDark":false,"swatches":["#efe7d6","#fbf7ee","#6b2737"],"metaTheme":"#efe7d6","fontMain":"\"Amiri\", \"Tajawal\", Georgia, serif","radiusBtn":"3px"},{"id":"vapor-arcade","name":"آركيد 8-Bit","subtitle":"ألعاب التسعينات","badge":"ألعاب","styleVariant":"arcade","isDark":true,"swatches":["#120a24","#1f123d","#ff4ecd"],"metaTheme":"#100821","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"4px"},{"id":"emerald-mint","name":"زمردي مالي","subtitle":"فاتح منعش","badge":"مالي","styleVariant":"minimal","isDark":false,"swatches":["#f2f7f5","#ffffff","#0d9488"],"metaTheme":"#f2f7f5","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"10px"},{"id":"midnight-navy","name":"أطلسي بحري","subtitle":"أزرق عميق","badge":"ليلي","styleVariant":"modern","isDark":true,"swatches":["#090f1c","#111a2e","#38bdf8"],"metaTheme":"#090f1c","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"12px"},{"id":"nordic-clean","name":"نورديك ناصع","subtitle":"عملي وبسيط","badge":"سويسري","styleVariant":"minimal","isDark":false,"swatches":["#f4f6fa","#ffffff","#2563eb"],"metaTheme":"#f4f6fa","fontMain":"\"Tajawal\", -apple-system, BlinkMacSystemFont, sans-serif","radiusBtn":"8px"}];
 
   function hashKey(str) {
     let h = 2166136261;
@@ -2894,6 +2937,7 @@
   const monthTxs = () => (appState.recent || []).filter(t => txMonthKey(t.date) === curMonthKey());
 
   function saveCache() {
+    if (isDemoMode || !getActiveScriptUrl()) return;
     try {
       linkStorage.setItem('fin_cache', JSON.stringify({
         a: appState.accounts, r: (appState.recent || []).slice(0, 300),
@@ -2903,6 +2947,7 @@
     } catch (e) {}
   }
   function loadCache() {
+    if (!getActiveScriptUrl()) return;
     try {
       const d = JSON.parse(linkStorage.getItem('fin_cache') || 'null');
       if (!d) return;
@@ -2982,6 +3027,13 @@
     showToast('حُفظ الطلب محلياً لإعادة الإرسال عند عودة الاتصال');
   }
   async function sendOrQueue(body) {
+    if (isDemoMode) {
+      return { ok: true, demo: true, request: body };
+    }
+    if (!getActiveScriptUrl()) {
+      showToast('اربط التطبيق بشيت Google Sheets من معالج الربط أولاً');
+      return { ok: false, permanent: true, request: body, error: new Error('غير مربوط بشيت') };
+    }
     const request = makeRequest(body);
     try { await sendTx(request); return { ok: true, request }; }
     catch (e) {
@@ -2991,6 +3043,7 @@
     }
   }
   async function flushQueue() {
+    if (isDemoMode || !getActiveScriptUrl()) return;
     const q = getQueue();
     if (!q.length || !navigator.onLine) return;
     const left = [];
@@ -3006,24 +3059,82 @@
     setConnectionState(left.length ? 'offline' : 'online', left.length ? 'طلبات معلّقة' : 'متصل بالشيت');
   }
 
-  let appState = {
-    accounts: [
-      { name: "كاش", kind: "خزنة", current: 0 },
-      { name: "المشرق نيو", kind: "بنك", current: 0 },
-      { name: "المشرق ادخار", kind: "بنك", current: 0 },
-      { name: "اتصالات كاش", kind: "محفظة", current: 0 },
-      { name: "ميزة", kind: "بطاقة", current: 0 }
-    ],
-    categories: {
-      expense: ["مأكولات ومشروبات", "مواصلات وبنزين", "تسوق ومستلزمات", "فواتير شهرية", "صحة وأدوية", "ترفيه وخروجات", "أخرى"],
-      income: ["راتب شهري", "تصميم", "أخرى"]
-    },
-    paymentMethods: ["كاش", "المشرق نيو", "المشرق ادخار", "اتصالات كاش", "ميزة"],
-    recent: [], debts: [], reminders: [],
-    currentType: 'صرف', unmaskedCards: {}, overviewUnmasked: { expense: false, income: false },
-    historyFilter: 'all', debtFilter: 'all'
-  };
+  function createEmptyAppState() {
+    return {
+      accounts: [],
+      categories: {
+        expense: ["مأكولات ومشروبات", "مواصلات", "تسوق ومستلزمات", "فواتير شهرية", "صحة وأدوية", "ترفيه", "أخرى"],
+        income: ["راتب شهري", "عمل إضافي", "أخرى"]
+      },
+      paymentMethods: [],
+      recent: [], debts: [], reminders: [],
+      currentType: 'صرف', unmaskedCards: {}, overviewUnmasked: { expense: false, income: false },
+      historyFilter: 'all', debtFilter: 'all'
+    };
+  }
+
+  let isDemoMode = false;
+  let appState = createEmptyAppState();
   let isGlobalVisible = false;
+
+  function syncOnboardingBanners() {
+    const linked = Boolean(getActiveScriptUrl() && getActiveScriptUrl().indexOf('PASTE_NEW_') !== 0);
+    const unlinkedBanner = document.getElementById('unlinkedBanner');
+    const demoBanner = document.getElementById('demoModeBanner');
+    if (unlinkedBanner) unlinkedBanner.classList.toggle('show', !linked && !isDemoMode);
+    if (demoBanner) demoBanner.classList.toggle('show', isDemoMode);
+  }
+
+  function enterDemoMode() {
+    const today = new Date();
+    const dOff = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); return localDateKey(d); };
+    isDemoMode = true;
+    appState = {
+      accounts: [
+        { name: "خزنة تجريبية", kind: "خزنة", opening: 1500, current: 2450 },
+        { name: "حساب بنكي تجريبي", kind: "بنك", opening: 8000, current: 11200 },
+        { name: "محفظة إلكترونية تجريبية", kind: "محفظة", opening: 900, current: 1350 }
+      ],
+      categories: {
+        expense: ["مأكولات ومشروبات", "مواصلات", "تسوق ومستلزمات", "فواتير شهرية", "صحة وأدوية", "ترفيه", "أخرى"],
+        income: ["راتب شهري", "عمل إضافي", "أخرى"]
+      },
+      paymentMethods: ["خزنة تجريبية", "حساب بنكي تجريبي", "محفظة إلكترونية تجريبية"],
+      recent: [
+        { row: 101, date: dOff(0), type: 'صرف', category: 'مأكولات ومشروبات', desc: 'مشتريات بقالة تجريبية', fromAcc: 'خزنة تجريبية', toAcc: '', amount: 320, notes: '' },
+        { row: 102, date: dOff(-1), type: 'قبض', category: 'راتب شهري', desc: 'دفعة دخل تجريبية', fromAcc: 'حساب بنكي تجريبي', toAcc: '', amount: 6500, notes: '' },
+        { row: 103, date: dOff(-2), type: 'صرف', category: 'فواتير شهرية', desc: 'فاتورة إنترنت تجريبية', fromAcc: 'محفظة إلكترونية تجريبية', toAcc: '', amount: 450, notes: '' },
+        { row: 104, date: dOff(-3), type: 'تحويل بين حسابات', category: 'تحويل', desc: 'تحويل تجريبي بين الحسابات', fromAcc: 'حساب بنكي تجريبي', toAcc: 'خزنة تجريبية', amount: 1000, notes: '' }
+      ],
+      debts: [
+        { row: 2, id: 'DEMO-D1', date: dOff(-4), type: 'ليا', desc: 'مستحق تجريبي (طرف أ)', amount: 750, status: 'مستحق', notes: '' },
+        { row: 3, id: 'DEMO-D2', date: dOff(-6), type: 'عليا', desc: 'مستحق تجريبي (طرف ب)', amount: 400, status: 'مستحق', notes: '' }
+      ],
+      reminders: [
+        { row: 2, id: 'DEMO-R1', dueDate: dOff(5), desc: 'اشتراك تجريبي شهري', amount: 350, repeat: 'شهري', status: 'قادم', notes: '' }
+      ],
+      currentType: 'صرف', unmaskedCards: {}, overviewUnmasked: { expense: false, income: false },
+      historyFilter: 'all', debtFilter: 'all'
+    };
+    isGlobalVisible = true;
+    setConnectionState('offline', 'وضع التجربة');
+    syncOnboardingBanners();
+    refreshAccountSelects(); switchType('صرف');
+    renderCards(); renderRecentHome(); renderMonthlyOverview(); renderDebts(); renderReminders(); renderAnalytics();
+    showToast('تم تشغيل وضع التجربة ببيانات افتراضية معزولة');
+  }
+
+  function exitDemoMode() {
+    isDemoMode = false;
+    isGlobalVisible = false;
+    appState = createEmptyAppState();
+    if (getActiveScriptUrl()) { loadCache(); fetchData(); }
+    else { setConnectionState('offline', 'غير متصل'); }
+    syncOnboardingBanners();
+    refreshAccountSelects(); switchType('صرف');
+    renderCards(); renderRecentHome(); renderMonthlyOverview(); renderDebts(); renderReminders(); renderAnalytics();
+    showToast('تم إنهاء وضع التجربة');
+  }
 
   function localDateKey(date = new Date()) {
     return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
@@ -3235,6 +3346,10 @@
   function renderCards() {
     renderTotal();
     const grid = document.getElementById('accountsGrid');
+    if (!appState.accounts || appState.accounts.length === 0) {
+      grid.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:0.84rem;padding:18px;">لا توجد حسابات بعد — اربط شيت Google Sheets أو أضف حساباً جديداً، أو جرّب الوضع الافتراضي.</div>';
+      return;
+    }
     grid.innerHTML = appState.accounts.map((acc, idx) => {
       const val = cleanNumber(acc.current);
       const isVisible = isGlobalVisible || appState.unmaskedCards[idx];
@@ -3924,11 +4039,11 @@
   };
 
   function fetchData() {
+    syncOnboardingBanners();
+    if (isDemoMode) { setConnectionState('offline', 'وضع التجربة'); return; }
     const sUrl = getActiveScriptUrl();
     const token = getActiveApiToken();
-    const banner = document.getElementById('unlinkedBanner');
-    if (banner) banner.classList.toggle('show', !sUrl || sUrl.indexOf('PASTE_NEW_') === 0);
-    if (!sUrl || sUrl.indexOf('PASTE_NEW_') === 0) { setConnectionState('offline', 'غير مربوط بشيت'); return; }
+    if (!sUrl || sUrl.indexOf('PASTE_NEW_') === 0) { setConnectionState('offline', 'غير متصل'); return; }
     const old = document.getElementById('jsonpReadScript'); if (old) old.remove();
     const script = document.createElement('script'); script.id = 'jsonpReadScript';
     const params = new URLSearchParams({ callback: 'handleDataLoaded', _: String(Date.now()) });
@@ -4350,9 +4465,11 @@
   switchType('صرف'); refreshAccountSelects(); refreshSetupWizardUI();
   document.getElementById('lockSel').value = safeStorage.getItem('autolock') || '1';
   updateQueueUI();
-  setConnectionState(navigator.onLine ? 'online' : 'offline', navigator.onLine ? 'الاتصال متاح' : 'غير متصل');
-  if (!getActiveScriptUrl()) {
-    switchNavTab('setup');
+  syncOnboardingBanners();
+  if (getActiveScriptUrl()) {
+    setConnectionState(navigator.onLine ? 'online' : 'offline', navigator.onLine ? 'الاتصال متاح' : 'غير متصل');
+  } else {
+    setConnectionState('offline', 'غير متصل');
   }
   const ghInput = document.getElementById('githubRepoInput');
   if (ghInput) ghInput.value = getGithubRepo();

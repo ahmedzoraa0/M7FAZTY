@@ -11,13 +11,8 @@ export function generateStandaloneHtml(options?: {
   githubRepo?: string;
 }): string {
   const isStarter = Boolean(options?.starterMode);
-  const scriptUrl = isStarter
-    ? ''
-    : options?.scriptUrl ??
-      'https://script.google.com/macros/s/AKfycbwA4Mnxrz8cTM6Kh8Zt21oeIP0YzkhJo69QCSHrWY6pcR5YX8rYAknOC9WUayI05urp/exec';
-  const spreadsheetId = isStarter
-    ? ''
-    : options?.spreadsheetId ?? '1FPTv7C_rNgHdn2bpTsjs2hQEXHDEvdk5C1TiQEb35ak';
+  const scriptUrl = isStarter ? '' : String(options?.scriptUrl || '').trim();
+  const spreadsheetId = isStarter ? '' : String(options?.spreadsheetId || '').trim();
   const apiToken = options?.apiToken || '';
   const profileName = (options?.profileName || '').trim();
   const githubRepo = normalizeGithubRepo(options?.githubRepo || '');
@@ -59,14 +54,15 @@ export function generateStandaloneHtml(options?: {
   <meta charset="UTF-8">
   <meta name="theme-color" content="#f5f0e6">
   <meta name="description" content="لوحة إدارة مالية شخصية للمصروفات والإيرادات والحسابات والمستحقات والالتزامات.">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>M7FAZTY | الإدارة المالية الشخصية</title>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1711'/><path d='M8 12h16M8 16h16M8 20h10' stroke='%23e0bb6a' stroke-width='2' stroke-linecap='round'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@500;700;800&family=Changa:wght@500;700;800&family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Silkscreen:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Mono:wght@500;700&family=Silkscreen:wght@400;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
   <style>
     /* ===== نظام الثيمات الموحد لكل الشاشات (ألوان + خطوط + أشكال + أيقونات) ===== */
@@ -134,11 +130,25 @@ ${themeCssBlocks}
         radial-gradient(700px 400px at -10% 35%, var(--bg-glow-2), transparent 60%),
         var(--bg);
       color: var(--text);
-      padding: 14px 14px 64px;
+      padding: 14px 14px calc(98px + env(safe-area-inset-bottom, 0px));
       display: flex;
       justify-content: center;
       min-height: 100vh;
       transition: background-color 0.22s ease, color 0.22s ease;
+    }
+
+    :is(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+      outline: 2.5px solid var(--primary-accent);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
     }
 
     .app-container {
@@ -592,9 +602,19 @@ ${themeCssBlocks}
     }
     .acc-card:hover { border-color: var(--primary-accent); }
     .acc-card:last-child:nth-child(odd) { grid-column: span 2; }
-    .acc-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .acc-name { font-size: 0.86rem; font-weight: 800; color: var(--text); }
-    .acc-kind { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
+    .acc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+    .acc-name {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .acc-kind { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
     .acc-value { font-size: 1.24rem; font-weight: 800; margin-top: 8px; direction: ltr; text-align: right; display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; font-variant-numeric: tabular-nums; }
     .acc-value.is-masked { letter-spacing: 3px; font-size: 1.1rem; color: var(--text-muted); }
     .acc-value.is-negative { color: var(--expense); }
@@ -679,19 +699,22 @@ ${themeCssBlocks}
     .amount-box input { font-size: 1.55rem; font-weight: 800; padding-left: 60px; font-variant-numeric: tabular-nums; }
     .amount-box .curr-badge { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 800; color: var(--text-muted); }
 
-    .chips-row { display: flex; gap: 6px; margin-top: -4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
-    .chips-row::-webkit-scrollbar { display: none; }
+    .chips-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: -4px; margin-bottom: 14px; }
+    @media (min-width: 560px) {
+      .chips-row { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+    }
     .chip {
       background: var(--surface-soft);
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 9px;
-      padding: 7px 11px;
-      font-size: 0.82rem;
+      min-height: 38px;
+      padding: 7px 6px;
+      font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
-      flex-shrink: 0;
+      text-align: center;
     }
 
     .dual-cols { display: flex; gap: 10px; }
@@ -1229,8 +1252,8 @@ ${themeCssBlocks}
       </div>
     </div>
     <div class="header-actions">
-      <div class="sync-status" id="connectionState" aria-live="polite"><span class="sync-dot"></span><span id="connectionLabel">جارٍ الاتصال</span></div>
-      <button type="button" class="icon-btn" title="تحديث البيانات" onclick="fetchData()">
+      <div class="sync-status offline" id="connectionState" aria-live="polite"><span class="sync-dot"></span><span id="connectionLabel">غير متصل</span></div>
+      <button type="button" class="icon-btn" title="تحديث البيانات" aria-label="تحديث البيانات" onclick="fetchData()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 4 23 10 17 10"></polyline>
           <polyline points="1 20 1 14 7 14"></polyline>
@@ -1248,18 +1271,32 @@ ${themeCssBlocks}
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
       <button type="button" class="action-link-btn" id="bannerApplyUpdateBtn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:8px 14px;" onclick="applyGithubUpdate()">تحديث الملف الآن</button>
-      <button type="button" class="btn-secondary" style="padding:6px 10px;" onclick="dismissUpdateBanner()" title="إخفاء مؤقتاً">✕</button>
+      <button type="button" class="btn-secondary" style="padding:6px 10px;" onclick="dismissUpdateBanner()" title="إخفاء مؤقتاً" aria-label="إخفاء إشعار التحديث">✕</button>
     </div>
   </div>
 
   <!-- ================= TAB 1: الرئيسية ================= -->
   <div class="tab-content active" id="tabHome">
     <div class="setup-banner" id="unlinkedBanner" style="grid-column: 1 / -1;">
-      <div>
-        <div style="font-size:0.9rem;font-weight:800;">مرحباً بك في M7FAZTY! التطبيق غير مربوط بشيت جوجل بعد</div>
-        <div style="font-size:0.76rem;color:var(--text-muted);margin-top:2px;">سجّل اسمك أولاً للتحقق من وجود شيت M7FAZTY أو إنشاء وربط شيت جديد في خطوات بسيطة</div>
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:0.92rem;font-weight:800;">مرحباً بك في M7FAZTY — التطبيق غير مربوط بشيت جوجل بعد</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;line-height:1.55;">ابدأ بربط شيت Google Sheets الخاص بك في خطوات بسيطة، أو جرّب التطبيق أولاً ببيانات افتراضية معزولة تماماً بدون أي اتصال بالشبكة.</div>
       </div>
-      <button type="button" class="action-link-btn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:9px 14px;" onclick="switchNavTab('setup')">ابدأ معالج الربط الآن ←</button>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <button type="button" class="action-link-btn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:9px 14px;min-height:40px;" onclick="switchNavTab('setup')">ربط شيت Google Sheets الآن ←</button>
+        <button type="button" class="btn-secondary" style="min-height:40px;" onclick="enterDemoMode()">تشغيل وضع التجربة (بيانات افتراضية)</button>
+      </div>
+    </div>
+
+    <div class="setup-banner" id="demoModeBanner" style="grid-column: 1 / -1;border-color:var(--warning);background:var(--warning-bg);">
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:0.88rem;font-weight:800;color:var(--warning);">وضع التجربة المبدئي مُفعّل — بيانات افتراضية تماماً</div>
+        <div style="font-size:0.76rem;color:var(--text);margin-top:2px;">جميع الحسابات والأرقام هنا وهمية للمعاينة فقط، ولا يتم إرسال أو حفظ أي شيء على Google Sheets.</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" class="action-link-btn" style="background:var(--accent-gradient);color:var(--accent-contrast);border:none;padding:8px 12px;" onclick="exitDemoMode();switchNavTab('setup');">ربط شيت حقيقي</button>
+        <button type="button" class="btn-secondary" onclick="exitDemoMode()">إنهاء التجربة</button>
+      </div>
     </div>
 
     <div class="stat-card" id="totalCard" onclick="toggleGlobalPrivacy()">
@@ -1827,6 +1864,7 @@ ${themeCssBlocks}
           <div class="setting-info">
             <div class="setting-title">رمز PIN الحماية (اختياري)</div>
             <div class="setting-desc" id="pinStatusDesc">غير مُفعّل — يمكنك تعيين رمز من 4 أرقام</div>
+            <div class="setting-desc" style="color:var(--warning);margin-top:3px;">تنبيه أمان: رمز PIN هو قفل للواجهة على هذا المتصفح فقط وليس تشفيراً للبيانات، ويمكن تجاوزه عبر أدوات المطورين.</div>
           </div>
         </div>
         <div class="setting-actions">
@@ -2471,6 +2509,7 @@ ${themeCssBlocks}
   const monthTxs = () => (appState.recent || []).filter(t => txMonthKey(t.date) === curMonthKey());
 
   function saveCache() {
+    if (isDemoMode || !getActiveScriptUrl()) return;
     try {
       linkStorage.setItem('fin_cache', JSON.stringify({
         a: appState.accounts, r: (appState.recent || []).slice(0, 300),
@@ -2480,6 +2519,7 @@ ${themeCssBlocks}
     } catch (e) {}
   }
   function loadCache() {
+    if (!getActiveScriptUrl()) return;
     try {
       const d = JSON.parse(linkStorage.getItem('fin_cache') || 'null');
       if (!d) return;
@@ -2559,6 +2599,13 @@ ${themeCssBlocks}
     showToast('حُفظ الطلب محلياً لإعادة الإرسال عند عودة الاتصال');
   }
   async function sendOrQueue(body) {
+    if (isDemoMode) {
+      return { ok: true, demo: true, request: body };
+    }
+    if (!getActiveScriptUrl()) {
+      showToast('اربط التطبيق بشيت Google Sheets من معالج الربط أولاً');
+      return { ok: false, permanent: true, request: body, error: new Error('غير مربوط بشيت') };
+    }
     const request = makeRequest(body);
     try { await sendTx(request); return { ok: true, request }; }
     catch (e) {
@@ -2568,6 +2615,7 @@ ${themeCssBlocks}
     }
   }
   async function flushQueue() {
+    if (isDemoMode || !getActiveScriptUrl()) return;
     const q = getQueue();
     if (!q.length || !navigator.onLine) return;
     const left = [];
@@ -2583,24 +2631,82 @@ ${themeCssBlocks}
     setConnectionState(left.length ? 'offline' : 'online', left.length ? 'طلبات معلّقة' : 'متصل بالشيت');
   }
 
-  let appState = {
-    accounts: [
-      { name: "كاش", kind: "خزنة", current: 0 },
-      { name: "المشرق نيو", kind: "بنك", current: 0 },
-      { name: "المشرق ادخار", kind: "بنك", current: 0 },
-      { name: "اتصالات كاش", kind: "محفظة", current: 0 },
-      { name: "ميزة", kind: "بطاقة", current: 0 }
-    ],
-    categories: {
-      expense: ["مأكولات ومشروبات", "مواصلات وبنزين", "تسوق ومستلزمات", "فواتير شهرية", "صحة وأدوية", "ترفيه وخروجات", "أخرى"],
-      income: ["راتب شهري", "تصميم", "أخرى"]
-    },
-    paymentMethods: ["كاش", "المشرق نيو", "المشرق ادخار", "اتصالات كاش", "ميزة"],
-    recent: [], debts: [], reminders: [],
-    currentType: 'صرف', unmaskedCards: {}, overviewUnmasked: { expense: false, income: false },
-    historyFilter: 'all', debtFilter: 'all'
-  };
+  function createEmptyAppState() {
+    return {
+      accounts: [],
+      categories: {
+        expense: ["مأكولات ومشروبات", "مواصلات", "تسوق ومستلزمات", "فواتير شهرية", "صحة وأدوية", "ترفيه", "أخرى"],
+        income: ["راتب شهري", "عمل إضافي", "أخرى"]
+      },
+      paymentMethods: [],
+      recent: [], debts: [], reminders: [],
+      currentType: 'صرف', unmaskedCards: {}, overviewUnmasked: { expense: false, income: false },
+      historyFilter: 'all', debtFilter: 'all'
+    };
+  }
+
+  let isDemoMode = false;
+  let appState = createEmptyAppState();
   let isGlobalVisible = false;
+
+  function syncOnboardingBanners() {
+    const linked = Boolean(getActiveScriptUrl() && getActiveScriptUrl().indexOf('PASTE_NEW_') !== 0);
+    const unlinkedBanner = document.getElementById('unlinkedBanner');
+    const demoBanner = document.getElementById('demoModeBanner');
+    if (unlinkedBanner) unlinkedBanner.classList.toggle('show', !linked && !isDemoMode);
+    if (demoBanner) demoBanner.classList.toggle('show', isDemoMode);
+  }
+
+  function enterDemoMode() {
+    const today = new Date();
+    const dOff = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); return localDateKey(d); };
+    isDemoMode = true;
+    appState = {
+      accounts: [
+        { name: "خزنة تجريبية", kind: "خزنة", opening: 1500, current: 2450 },
+        { name: "حساب بنكي تجريبي", kind: "بنك", opening: 8000, current: 11200 },
+        { name: "محفظة إلكترونية تجريبية", kind: "محفظة", opening: 900, current: 1350 }
+      ],
+      categories: {
+        expense: ["مأكولات ومشروبات", "مواصلات", "تسوق ومستلزمات", "فواتير شهرية", "صحة وأدوية", "ترفيه", "أخرى"],
+        income: ["راتب شهري", "عمل إضافي", "أخرى"]
+      },
+      paymentMethods: ["خزنة تجريبية", "حساب بنكي تجريبي", "محفظة إلكترونية تجريبية"],
+      recent: [
+        { row: 101, date: dOff(0), type: 'صرف', category: 'مأكولات ومشروبات', desc: 'مشتريات بقالة تجريبية', fromAcc: 'خزنة تجريبية', toAcc: '', amount: 320, notes: '' },
+        { row: 102, date: dOff(-1), type: 'قبض', category: 'راتب شهري', desc: 'دفعة دخل تجريبية', fromAcc: 'حساب بنكي تجريبي', toAcc: '', amount: 6500, notes: '' },
+        { row: 103, date: dOff(-2), type: 'صرف', category: 'فواتير شهرية', desc: 'فاتورة إنترنت تجريبية', fromAcc: 'محفظة إلكترونية تجريبية', toAcc: '', amount: 450, notes: '' },
+        { row: 104, date: dOff(-3), type: 'تحويل بين حسابات', category: 'تحويل', desc: 'تحويل تجريبي بين الحسابات', fromAcc: 'حساب بنكي تجريبي', toAcc: 'خزنة تجريبية', amount: 1000, notes: '' }
+      ],
+      debts: [
+        { row: 2, id: 'DEMO-D1', date: dOff(-4), type: 'ليا', desc: 'مستحق تجريبي (طرف أ)', amount: 750, status: 'مستحق', notes: '' },
+        { row: 3, id: 'DEMO-D2', date: dOff(-6), type: 'عليا', desc: 'مستحق تجريبي (طرف ب)', amount: 400, status: 'مستحق', notes: '' }
+      ],
+      reminders: [
+        { row: 2, id: 'DEMO-R1', dueDate: dOff(5), desc: 'اشتراك تجريبي شهري', amount: 350, repeat: 'شهري', status: 'قادم', notes: '' }
+      ],
+      currentType: 'صرف', unmaskedCards: {}, overviewUnmasked: { expense: false, income: false },
+      historyFilter: 'all', debtFilter: 'all'
+    };
+    isGlobalVisible = true;
+    setConnectionState('offline', 'وضع التجربة');
+    syncOnboardingBanners();
+    refreshAccountSelects(); switchType('صرف');
+    renderCards(); renderRecentHome(); renderMonthlyOverview(); renderDebts(); renderReminders(); renderAnalytics();
+    showToast('تم تشغيل وضع التجربة ببيانات افتراضية معزولة');
+  }
+
+  function exitDemoMode() {
+    isDemoMode = false;
+    isGlobalVisible = false;
+    appState = createEmptyAppState();
+    if (getActiveScriptUrl()) { loadCache(); fetchData(); }
+    else { setConnectionState('offline', 'غير متصل'); }
+    syncOnboardingBanners();
+    refreshAccountSelects(); switchType('صرف');
+    renderCards(); renderRecentHome(); renderMonthlyOverview(); renderDebts(); renderReminders(); renderAnalytics();
+    showToast('تم إنهاء وضع التجربة');
+  }
 
   function localDateKey(date = new Date()) {
     return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
@@ -2812,6 +2918,10 @@ ${themeCssBlocks}
   function renderCards() {
     renderTotal();
     const grid = document.getElementById('accountsGrid');
+    if (!appState.accounts || appState.accounts.length === 0) {
+      grid.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:0.84rem;padding:18px;">لا توجد حسابات بعد — اربط شيت Google Sheets أو أضف حساباً جديداً، أو جرّب الوضع الافتراضي.</div>';
+      return;
+    }
     grid.innerHTML = appState.accounts.map((acc, idx) => {
       const val = cleanNumber(acc.current);
       const isVisible = isGlobalVisible || appState.unmaskedCards[idx];
@@ -3501,11 +3611,11 @@ ${themeCssBlocks}
   };
 
   function fetchData() {
+    syncOnboardingBanners();
+    if (isDemoMode) { setConnectionState('offline', 'وضع التجربة'); return; }
     const sUrl = getActiveScriptUrl();
     const token = getActiveApiToken();
-    const banner = document.getElementById('unlinkedBanner');
-    if (banner) banner.classList.toggle('show', !sUrl || sUrl.indexOf('PASTE_NEW_') === 0);
-    if (!sUrl || sUrl.indexOf('PASTE_NEW_') === 0) { setConnectionState('offline', 'غير مربوط بشيت'); return; }
+    if (!sUrl || sUrl.indexOf('PASTE_NEW_') === 0) { setConnectionState('offline', 'غير متصل'); return; }
     const old = document.getElementById('jsonpReadScript'); if (old) old.remove();
     const script = document.createElement('script'); script.id = 'jsonpReadScript';
     const params = new URLSearchParams({ callback: 'handleDataLoaded', _: String(Date.now()) });
@@ -3927,9 +4037,11 @@ ${themeCssBlocks}
   switchType('صرف'); refreshAccountSelects(); refreshSetupWizardUI();
   document.getElementById('lockSel').value = safeStorage.getItem('autolock') || '1';
   updateQueueUI();
-  setConnectionState(navigator.onLine ? 'online' : 'offline', navigator.onLine ? 'الاتصال متاح' : 'غير متصل');
-  if (!getActiveScriptUrl()) {
-    switchNavTab('setup');
+  syncOnboardingBanners();
+  if (getActiveScriptUrl()) {
+    setConnectionState(navigator.onLine ? 'online' : 'offline', navigator.onLine ? 'الاتصال متاح' : 'غير متصل');
+  } else {
+    setConnectionState('offline', 'غير متصل');
   }
   const ghInput = document.getElementById('githubRepoInput');
   if (ghInput) ghInput.value = getGithubRepo();

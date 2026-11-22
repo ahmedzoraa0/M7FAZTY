@@ -323,16 +323,18 @@ export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
               type="button"
               onClick={() => stepMonth(-1)}
               title="الفترة السابقة"
-              className="w-9 h-9 rounded-xl border flex items-center justify-center cursor-pointer"
+              aria-label="الفترة السابقة"
+              className="w-10 h-10 rounded-xl border flex items-center justify-center cursor-pointer"
               style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
 
             <select
+              aria-label="اختيار الشهر"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="h-9 px-2.5 rounded-xl border text-xs font-bold outline-none cursor-pointer"
+              className="h-10 px-2.5 rounded-xl border text-xs font-bold outline-none cursor-pointer"
               style={{
                 background: 'var(--surface-soft)',
                 borderColor: 'var(--border)',
@@ -348,9 +350,10 @@ export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
             </select>
 
             <select
+              aria-label="اختيار السنة"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="h-9 px-2.5 rounded-xl border text-xs font-bold font-mono-num outline-none cursor-pointer"
+              className="h-10 px-2.5 rounded-xl border text-xs font-bold font-mono-num outline-none cursor-pointer"
               style={{
                 background: 'var(--surface-soft)',
                 borderColor: 'var(--border)',
@@ -368,7 +371,8 @@ export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
               type="button"
               onClick={() => stepMonth(1)}
               title="الفترة التالية"
-              className="w-9 h-9 rounded-xl border flex items-center justify-center cursor-pointer"
+              aria-label="الفترة التالية"
+              className="w-10 h-10 rounded-xl border flex items-center justify-center cursor-pointer"
               style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -397,15 +401,16 @@ export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
               <button
                 key={item.key}
                 type="button"
+                aria-pressed={on}
                 onClick={() => togglePanel(item.key)}
-                className="px-2.5 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                className="min-h-[36px] px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
                 style={{
                   background: on ? 'var(--accent-gradient)' : 'var(--surface-soft)',
                   borderColor: on ? 'transparent' : 'var(--border)',
                   color: on ? 'var(--accent-contrast)' : 'var(--text-muted)',
                 }}
               >
-                {on ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                {on ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                 <span>{item.label}</span>
               </button>
             );

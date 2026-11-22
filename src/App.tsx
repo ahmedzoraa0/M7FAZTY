@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
   Bell,
@@ -12,11 +12,13 @@ import {
   EyeOff,
   FileSpreadsheet,
   FileText,
+  FlaskConical,
   Home,
   KeyRound,
   Landmark,
   Lock,
   Menu,
+  MoreHorizontal,
   Palette,
   Plus,
   PlusCircle,
@@ -29,7 +31,6 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import {
   AccountItem,
   AccountKind,
@@ -41,6 +42,7 @@ import {
   TransactionType,
 } from './types';
 import { THEMES, applyThemeToDocument } from './themes';
+import { EMPTY_FINANCE_STATE, createSyntheticDemoState } from './demoData';
 import {
   DEFAULT_SCRIPT_URL,
   DEFAULT_SPREADSHEET_ID,
@@ -73,9 +75,14 @@ import {
 } from './services/sheetsApi';
 import { AddAccountModal } from './components/AddAccountModal';
 import { AccountKindManagerModal } from './components/AccountKindManagerModal';
-import { AnalyticsSection } from './components/AnalyticsSection';
 import { PinLockOverlay } from './components/PinLockOverlay';
-import { SheetStudioPanel } from './components/SheetStudioPanel';
+
+const AnalyticsSection = lazy(() =>
+  import('./components/AnalyticsSection').then((m) => ({ default: m.AnalyticsSection }))
+);
+const SheetStudioPanel = lazy(() =>
+  import('./components/SheetStudioPanel').then((m) => ({ default: m.SheetStudioPanel }))
+);
 
 type TabKey =
   | 'home'
@@ -86,44 +93,6 @@ type TabKey =
   | 'stats'
   | 'sheets'
   | 'settings';
-
-const DEFAULT_STATE: FinanceState = {
-  accounts: [
-    { name: 'كاش', kind: 'خزنة', current: 4779.0 },
-    { name: 'المشرق نيو', kind: 'بنك', current: 697.73 },
-    { name: 'المشرق ادخار', kind: 'بنك', current: 25078.36 },
-    { name: 'اتصالات كاش', kind: 'محفظة', current: 757.2 },
-    { name: 'ميزة', kind: 'بطاقة', current: 915.6 },
-    { name: 'ايزي باي', kind: 'بطاقة', current: 0 },
-    { name: 'اخرى', kind: 'أخرى', current: 0 },
-  ],
-  categories: {
-    expense: [
-      'مأكولات ومشروبات',
-      'مواصلات وبنزين',
-      'تسوق ومستلزمات',
-      'فواتير شهرية',
-      'صحة وأدوية',
-      'ترفيه وخروجات',
-      'أخرى',
-      'طباعة وتصميمات',
-      'تبرعات',
-    ],
-    income: ['راتب شهري', 'تصميم', 'أخرى'],
-  },
-  paymentMethods: [
-    'كاش',
-    'المشرق نيو',
-    'المشرق ادخار',
-    'اتصالات كاش',
-    'ميزة',
-    'ايزي باي',
-    'اخرى',
-  ],
-  recent: [],
-  debts: [],
-  reminders: [],
-};
 
 const fmt = (n: number) =>
   Number(n || 0).toLocaleString('en-US', {
@@ -182,43 +151,48 @@ export default function App() {
     () => localStorage.getItem('mf_profile_name') || ''
   );
 
-  // Connectivity & Sync
+  // Connectivity & Sync (zero hardcoded personal URLs or Sheet IDs)
   const [scriptUrl, setScriptUrl] = useState<string>(
     () => localStorage.getItem('mf_script_url') || DEFAULT_SCRIPT_URL
   );
   const [spreadsheetId, setSpreadsheetId] = useState<string>(
     () => localStorage.getItem('mf_sheet_id') || DEFAULT_SPREADSHEET_ID
   );
+  const [demoMode, setDemoMode] = useState<boolean>(false);
+  const [confirmDeleteKey, setConfirmDeleteKey] = useState<string | null>(null);
 
   const sheetStorageKey = useMemo(() => {
     const sid = extractSpreadsheetId(spreadsheetId);
-    return sid || 'default';
-  }, [spreadsheetId]);
+    if (sid) return sid;
+    if (scriptUrl.trim()) return `script_${scriptUrl.trim().slice(-12)}`;
+    return 'unlinked';
+  }, [spreadsheetId, scriptUrl]);
 
-  // Finance State (isolated per spreadsheetId)
+  // Finance State (clean empty state until linked or explicit demo mode activated)
   const [state, setState] = useState<FinanceState>(() => {
-    const initialSid = extractSpreadsheetId(localStorage.getItem('mf_sheet_id') || DEFAULT_SPREADSHEET_ID) || 'default';
-    try {
-      const cached =
-        localStorage.getItem(`mf_cache_v11::${initialSid}`) ||
-        (initialSid === DEFAULT_SPREADSHEET_ID ? localStorage.getItem('mf_cache_v11') : null);
-      if (cached) return JSON.parse(cached) as FinanceState;
-    } catch {
-      // ignore
+    const initialSid = extractSpreadsheetId(localStorage.getItem('mf_sheet_id') || '');
+    const initialScript = (localStorage.getItem('mf_script_url') || '').trim();
+    const key = initialSid || (initialScript ? `script_${initialScript.slice(-12)}` : '');
+    if (key) {
+      try {
+        const cached = localStorage.getItem(`mf_cache_v11::${key}`);
+        if (cached) return JSON.parse(cached) as FinanceState;
+      } catch {
+        // ignore
+      }
     }
-    return DEFAULT_STATE;
+    return EMPTY_FINANCE_STATE;
   });
 
-  const [connStatus, setConnStatus] = useState<'online' | 'offline' | 'syncing'>('syncing');
-  const [connLabel, setConnLabel] = useState<string>('جارٍ الاتصال');
+  const [connStatus, setConnStatus] = useState<'online' | 'offline' | 'syncing'>('offline');
+  const [connLabel, setConnLabel] = useState<string>('غير متصل');
   const [queue, setQueue] = useState<string[]>(() => {
-    const initialSid = extractSpreadsheetId(localStorage.getItem('mf_sheet_id') || DEFAULT_SPREADSHEET_ID) || 'default';
+    const initialSid = extractSpreadsheetId(localStorage.getItem('mf_sheet_id') || '');
+    const initialScript = (localStorage.getItem('mf_script_url') || '').trim();
+    const key = initialSid || (initialScript ? `script_${initialScript.slice(-12)}` : '');
+    if (!key) return [];
     try {
-      const raw = JSON.parse(
-        localStorage.getItem(`mf_tx_queue::${initialSid}`) ||
-          (initialSid === DEFAULT_SPREADSHEET_ID ? localStorage.getItem('mf_tx_queue') : null) ||
-          '[]'
-      );
+      const raw = JSON.parse(localStorage.getItem(`mf_tx_queue::${key}`) || '[]');
       return Array.isArray(raw) ? raw : [];
     } catch {
       return [];
@@ -306,11 +280,10 @@ export default function App() {
   const [historyFilter, setHistoryFilter] = useState<'all' | 'صرف' | 'قبض' | 'تحويل'>('all');
   const [selectedTx, setSelectedTx] = useState<TransactionItem | null>(null);
   const [budgets, setBudgets] = useState<Record<string, number>>(() => {
-    const initialSid = extractSpreadsheetId(localStorage.getItem('mf_sheet_id') || DEFAULT_SPREADSHEET_ID) || 'default';
+    const initialSid = extractSpreadsheetId(localStorage.getItem('mf_sheet_id') || '');
+    if (!initialSid) return {};
     try {
-      return JSON.parse(
-        localStorage.getItem(`mf_budgets::${initialSid}`) || localStorage.getItem('mf_budgets') || '{}'
-      );
+      return JSON.parse(localStorage.getItem(`mf_budgets::${initialSid}`) || '{}');
     } catch {
       return {};
     }
@@ -337,33 +310,38 @@ export default function App() {
     setResolvedThemeId(resolved.id);
   }, [themePref]);
 
-  // Persist per-sheet cache & queue so switching spreadsheets never leaks data
+  // Persist per-sheet cache & queue only when linked and NOT in Demo Mode
   useEffect(() => {
     localStorage.setItem('mf_profile_name', profileName);
   }, [profileName]);
 
   useEffect(() => {
+    if (demoMode || sheetStorageKey === 'unlinked') return;
     try {
       localStorage.setItem(`mf_cache_v11::${sheetStorageKey}`, JSON.stringify(state));
     } catch {
       // ignore
     }
-  }, [state, sheetStorageKey]);
+  }, [state, sheetStorageKey, demoMode]);
 
   useEffect(() => {
-    localStorage.setItem('mf_script_url', scriptUrl);
+    if (scriptUrl.trim()) localStorage.setItem('mf_script_url', scriptUrl);
+    else localStorage.removeItem('mf_script_url');
   }, [scriptUrl]);
 
   useEffect(() => {
-    localStorage.setItem('mf_sheet_id', spreadsheetId);
+    if (spreadsheetId.trim()) localStorage.setItem('mf_sheet_id', spreadsheetId);
+    else localStorage.removeItem('mf_sheet_id');
   }, [spreadsheetId]);
 
   useEffect(() => {
+    if (demoMode || sheetStorageKey === 'unlinked') return;
     localStorage.setItem(`mf_tx_queue::${sheetStorageKey}`, JSON.stringify(queue));
-  }, [queue, sheetStorageKey]);
+  }, [queue, sheetStorageKey, demoMode]);
 
-  // When active spreadsheetId changes, restore that specific sheet's queue/budgets/cache cleanly
+  // When active spreadsheetId changes, restore that specific sheet's queue/budgets cleanly
   useEffect(() => {
+    if (demoMode || sheetStorageKey === 'unlinked') return;
     try {
       const qRaw = JSON.parse(localStorage.getItem(`mf_tx_queue::${sheetStorageKey}`) || '[]');
       setQueue(Array.isArray(qRaw) ? qRaw : []);
@@ -376,7 +354,7 @@ export default function App() {
     } catch {
       setBudgets({});
     }
-  }, [sheetStorageKey]);
+  }, [sheetStorageKey, demoMode]);
 
   // Initialize Firebase Auth listener for Google Sheets OAuth
   useEffect(() => {
@@ -425,15 +403,52 @@ export default function App() {
     }
   }, [txType, activeCategoryList, txCat]);
 
-  // Load data from Google Sheets (prefer direct OAuth token if available, fallback to Apps Script)
+  const isLinked = Boolean(
+    scriptUrl.trim() || (googleToken && extractSpreadsheetId(spreadsheetId))
+  );
+
+  const enterDemoMode = useCallback(() => {
+    setDemoMode(true);
+    setState(createSyntheticDemoState());
+    setGlobalVisible(true);
+    setConnStatus('offline');
+    setConnLabel('وضع تجريبي');
+    notify('تم تفعيل الوضع التجريبي ببيانات افتراضية منفصلة عن أي شيت');
+  }, [notify]);
+
+  const exitDemoMode = useCallback(() => {
+    setDemoMode(false);
+    setGlobalVisible(false);
+    setState(EMPTY_FINANCE_STATE);
+    setConnStatus('offline');
+    setConnLabel('غير متصل');
+    notify('تم إنهاء الوضع التجريبي');
+  }, [notify]);
+
+  // Load data from Google Sheets ONLY when explicitly linked and NOT in Demo Mode
   const fetchData = useCallback(async () => {
+    if (demoMode) {
+      setConnStatus('offline');
+      setConnLabel('وضع تجريبي');
+      return;
+    }
+
+    const cleanSid = extractSpreadsheetId(spreadsheetId);
+    const cleanScript = scriptUrl.trim();
+
+    if (!cleanScript && !(googleToken && cleanSid)) {
+      setConnStatus('offline');
+      setConnLabel('غير متصل');
+      return;
+    }
+
     setConnStatus('syncing');
     setConnLabel('جارٍ المزامنة');
 
-    if (googleToken) {
+    if (googleToken && cleanSid) {
       try {
         const { report, state: directState } = await inspectSpreadsheet(
-          spreadsheetId,
+          cleanSid,
           googleToken
         );
         setInspectionReport(report);
@@ -463,8 +478,14 @@ export default function App() {
       }
     }
 
+    if (!cleanScript) {
+      setConnStatus('offline');
+      setConnLabel('غير متصل');
+      return;
+    }
+
     try {
-      const data = await fetchViaAppsScript(scriptUrl);
+      const data = await fetchViaAppsScript(cleanScript);
       setState((prev) => ({
         accounts: data.accounts.length ? data.accounts : prev.accounts,
         categories: {
@@ -486,17 +507,23 @@ export default function App() {
       setConnLabel('متصل بالشيت');
     } catch {
       setConnStatus('offline');
-      setConnLabel('وضع محلي');
+      setConnLabel('غير متصل');
     }
-  }, [googleToken, spreadsheetId, scriptUrl]);
+  }, [googleToken, spreadsheetId, scriptUrl, demoMode]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Queue helper
+  // Queue helper (never sends network writes in Demo Mode or when unlinked)
   const sendOrQueue = useCallback(
     async (paramsObj: Record<string, string | number | undefined>) => {
+      if (demoMode) {
+        return { ok: true as const };
+      }
+      if (!scriptUrl.trim()) {
+        return { ok: false as const, permanent: true as const, error: new Error('اربط التطبيق بشيت Google Sheets أولاً') };
+      }
       const req = makeRequestQuery(paramsObj);
       try {
         await writeViaAppsScript(scriptUrl, req);
@@ -518,7 +545,7 @@ export default function App() {
         return { ok: false as const, permanent: false as const, error: e };
       }
     },
-    [scriptUrl]
+    [scriptUrl, demoMode]
   );
 
   const flushQueue = useCallback(async () => {
@@ -1350,25 +1377,30 @@ export default function App() {
   }, [state.debts, debtFilter]);
 
   // Export functions
-  const handleExportExcel = () => {
-    const wb = XLSX.utils.book_new();
-    const txSheet = XLSX.utils.aoa_to_sheet([
-      ['التاريخ', 'النوع', 'التصنيف', 'البيان', 'من حساب', 'إلى حساب', 'المبلغ', 'ملاحظات'],
-      ...state.recent
-        .slice()
-        .reverse()
-        .map((t) => [t.date, t.type, t.category, t.desc, t.fromAcc, t.toAcc, t.amount, t.notes || '']),
-    ]);
-    XLSX.utils.book_append_sheet(wb, txSheet, 'المعاملات');
-    const accSheet = XLSX.utils.aoa_to_sheet([
-      ['الحساب', 'النوع', 'الرصيد الحالي'],
-      ...state.accounts.map((a) => [a.name, a.kind || 'محفظة', a.current]),
-      ['الإجمالي', '', totalBalance],
-    ]);
-    XLSX.utils.book_append_sheet(wb, accSheet, 'الأرصدة');
-    wb.Workbook = { Views: [{ RTL: true }] };
-    XLSX.writeFile(wb, `${buildM7faztySheetName(profileName)}_${localDateKey()}.xlsx`);
-    notify('تم تصدير ملف Excel بنجاح');
+  const handleExportExcel = async () => {
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+      const txSheet = XLSX.utils.aoa_to_sheet([
+        ['التاريخ', 'النوع', 'التصنيف', 'البيان', 'من حساب', 'إلى حساب', 'المبلغ', 'ملاحظات'],
+        ...state.recent
+          .slice()
+          .reverse()
+          .map((t) => [t.date, t.type, t.category, t.desc, t.fromAcc, t.toAcc, t.amount, t.notes || '']),
+      ]);
+      XLSX.utils.book_append_sheet(wb, txSheet, 'المعاملات');
+      const accSheet = XLSX.utils.aoa_to_sheet([
+        ['الحساب', 'النوع', 'الرصيد الحالي'],
+        ...state.accounts.map((a) => [a.name, a.kind || 'محفظة', a.current]),
+        ['الإجمالي', '', totalBalance],
+      ]);
+      XLSX.utils.book_append_sheet(wb, accSheet, 'الأرصدة');
+      wb.Workbook = { Views: [{ RTL: true }] };
+      XLSX.writeFile(wb, `${buildM7faztySheetName(profileName)}_${localDateKey()}.xlsx`);
+      notify('تم تصدير ملف Excel بنجاح');
+    } catch {
+      notify('تعذر تحميل أداة تصدير Excel');
+    }
   };
 
   const handleExportCsv = () => {
@@ -1458,8 +1490,27 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const groupedHistory = useMemo(() => {
+    const today = localDateKey();
+    const yestDate = new Date();
+    yestDate.setDate(yestDate.getDate() - 1);
+    const yesterday = localDateKey(yestDate);
+    const map = new Map<string, TransactionItem[]>();
+    filteredHistory.forEach((t) => {
+      const k = t.date || 'بدون تاريخ';
+      const arr = map.get(k);
+      if (arr) arr.push(t);
+      else map.set(k, [t]);
+    });
+    return Array.from(map.entries()).map(([dateKey, items]) => ({
+      dateKey,
+      label: dateKey === today ? `اليوم (${dateKey})` : dateKey === yesterday ? `أمس (${dateKey})` : dateKey,
+      items,
+    }));
+  }, [filteredHistory]);
+
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-safe-nav">
       {/* شاشة القفل المربوطة بالثيم */}
       <PinLockOverlay
         open={pinOverlay.open}
@@ -1480,15 +1531,16 @@ export default function App() {
         onNotify={notify}
       />
 
-      {/* القائمة الجانبية */}
+      {/* القائمة الجانبية للموبايل والتابلت */}
       {drawerOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-xs"
+          className="fixed inset-0 z-40 bg-black/45 backdrop-blur-xs lg:hidden"
           onClick={() => setDrawerOpen(false)}
+          aria-hidden="true"
         />
       )}
       <aside
-        className={`fixed top-0 right-0 bottom-0 z-50 w-72 max-w-[85vw] p-4 border-l flex flex-col transition-transform duration-200 overflow-y-auto ${
+        className={`fixed top-0 right-0 bottom-0 z-50 w-72 max-w-[85vw] p-4 border-l flex flex-col transition-transform duration-200 overflow-y-auto lg:hidden ${
           drawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{
@@ -1502,9 +1554,9 @@ export default function App() {
           className="flex items-center justify-between pb-4 mb-3 border-b"
           style={{ borderColor: 'var(--border)' }}
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
               style={{
                 background: 'var(--accent-gradient)',
                 color: 'var(--accent-contrast)',
@@ -1512,17 +1564,17 @@ export default function App() {
             >
               <Wallet className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="text-base font-extrabold">M7FAZTY</div>
               <div className="text-xs font-bold truncate" style={{ color: 'var(--text-muted)' }}>
-                {profileName.trim() ? `M7FAZTY_${profileName.trim()}` : 'الإدارة المالية المتكاملة'}
+                {profileName.trim() ? `M7FAZTY_${profileName.trim()}` : 'الإدارة المالية الشخصية'}
               </div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setDrawerOpen(false)}
-            className="w-9 h-9 rounded-xl border flex items-center justify-center cursor-pointer"
+            className="w-11 h-11 rounded-xl border flex items-center justify-center cursor-pointer shrink-0"
             style={{
               background: 'var(--surface-soft)',
               borderColor: 'var(--border)',
@@ -1534,15 +1586,16 @@ export default function App() {
           </button>
         </div>
 
-        <nav className="flex flex-col gap-1 flex-1">
+        <nav className="flex flex-col gap-1 flex-1" aria-label="التنقل بين الشاشات">
           {navItems.map((item) => {
             const active = activeTab === item.key;
             return (
               <button
                 key={item.key}
                 type="button"
+                aria-current={active ? 'page' : undefined}
                 onClick={() => navigateTo(item.key)}
-                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-sm font-bold cursor-pointer transition-colors"
+                className="flex items-center justify-between min-h-[44px] px-3.5 py-2.5 rounded-xl border text-sm font-bold cursor-pointer transition-colors"
                 style={{
                   background: active ? 'var(--surface-soft)' : 'transparent',
                   borderColor: active ? 'var(--primary-accent)' : 'transparent',
@@ -1570,35 +1623,113 @@ export default function App() {
               setDrawerOpen(false);
               setPinOverlay({ open: true, mode: storedPin ? 'unlock' : 'setup' });
             }}
-            className="w-full py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full min-h-[44px] py-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
             style={{
               background: 'var(--surface-soft)',
               borderColor: 'var(--border)',
               color: 'var(--text)',
             }}
           >
-            <Lock className="w-3.5 h-3.5" />
+            <Lock className="w-4 h-4" />
             <span>{storedPin ? 'قفل الشاشة' : 'تعيين رمز PIN'}</span>
           </button>
         </div>
       </aside>
 
-      {/* الهيكل الرئيسي */}
-      <div className="max-w-5xl mx-auto px-3 md:px-6 pt-3 space-y-4">
+      {/* الهيكل الرئيسي (شريط جانبي دائم على الشاشات الكبيرة + محتوى مرن) */}
+      <div className="max-w-7xl mx-auto px-3 md:px-6 pt-3 lg:flex lg:items-start lg:gap-5">
+        <aside
+          className="hidden lg:flex lg:flex-col w-64 shrink-0 sticky top-3 rounded-2xl p-4 border max-h-[calc(100vh-1.5rem)] overflow-y-auto"
+          style={{
+            background: 'var(--card-bg)',
+            borderColor: 'var(--border)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+          aria-label="القائمة الجانبية الدائمة"
+        >
+          <div
+            className="flex items-center gap-2.5 pb-4 mb-3 border-b"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{
+                background: 'var(--accent-gradient)',
+                color: 'var(--accent-contrast)',
+              }}
+            >
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-base font-extrabold">M7FAZTY</div>
+              <div className="text-xs font-bold truncate" style={{ color: 'var(--text-muted)' }}>
+                {profileName.trim() ? `M7FAZTY_${profileName.trim()}` : 'الإدارة المالية الشخصية'}
+              </div>
+            </div>
+          </div>
+
+          <nav className="flex flex-col gap-1 flex-1" aria-label="التنقل الرئيسي">
+            {navItems.map((item) => {
+              const active = activeTab === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  aria-current={active ? 'page' : undefined}
+                  onClick={() => navigateTo(item.key)}
+                  className="flex items-center justify-between min-h-[44px] px-3 py-2.5 rounded-xl border text-sm font-bold cursor-pointer transition-colors"
+                  style={{
+                    background: active ? 'var(--surface-soft)' : 'transparent',
+                    borderColor: active ? 'var(--primary-accent)' : 'transparent',
+                    color: active ? 'var(--primary-accent)' : 'var(--text)',
+                  }}
+                >
+                  <span className="flex items-center gap-2.5">
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </span>
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="text-xs font-extrabold tabular-nums" style={{ color: 'var(--expense)' }}>
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="mt-4 pt-3 border-t space-y-2" style={{ borderColor: 'var(--border)' }}>
+            <button
+              type="button"
+              onClick={() => setPinOverlay({ open: true, mode: storedPin ? 'unlock' : 'setup' })}
+              className="w-full min-h-[42px] py-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+              style={{
+                background: 'var(--surface-soft)',
+                borderColor: 'var(--border)',
+                color: 'var(--text)',
+              }}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>{storedPin ? 'قفل الشاشة' : 'تعيين رمز PIN'}</span>
+            </button>
+          </div>
+        </aside>
+
+        <main className="flex-1 min-w-0 space-y-4">
         {/* رأس الصفحة */}
         <header
-          className="sticky top-2.5 z-30 flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl border backdrop-blur-md"
+          className="sticky top-2.5 z-30 flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl border backdrop-blur-md"
           style={{
             background: 'var(--header-bg)',
             borderColor: 'var(--border)',
             boxShadow: 'var(--shadow-sm)',
           }}
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="w-11 h-11 rounded-xl border flex items-center justify-center cursor-pointer shrink-0"
+              className="lg:hidden w-11 h-11 rounded-xl border flex items-center justify-center cursor-pointer shrink-0"
               style={{
                 background: 'var(--surface-soft)',
                 borderColor: 'var(--border)',
@@ -1609,7 +1740,7 @@ export default function App() {
               <Menu className="w-5 h-5" />
             </button>
             <div className="min-w-0">
-              <h1 className="text-lg font-extrabold truncate">{screenTitle}</h1>
+              <h1 className="text-base sm:text-lg font-extrabold truncate">{screenTitle}</h1>
               <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
                 {todayLabel}
               </p>
@@ -1618,35 +1749,36 @@ export default function App() {
 
           <div className="flex items-center gap-2 shrink-0">
             <span
-              className="hidden sm:inline text-xs font-bold whitespace-nowrap"
+              className="text-xs font-bold whitespace-nowrap"
               style={{
-                color:
-                  connStatus === 'online'
-                    ? 'var(--income)'
-                    : connStatus === 'offline'
-                    ? 'var(--warning)'
-                    : 'var(--text-muted)',
+                color: demoMode
+                  ? 'var(--info)'
+                  : connStatus === 'online'
+                  ? 'var(--income)'
+                  : connStatus === 'offline'
+                  ? 'var(--warning)'
+                  : 'var(--text-muted)',
               }}
             >
               {connLabel}
             </span>
             <button
               type="button"
-              onClick={() => navigateTo('sheets')}
-              className="h-11 px-3 rounded-xl border text-xs font-bold hidden md:flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              onClick={() => navigateTo('add')}
+              className="h-11 px-3.5 rounded-xl text-xs font-extrabold hidden lg:inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               style={{
-                background: 'var(--surface-soft)',
-                borderColor: 'var(--border)',
-                color: 'var(--text)',
+                background: 'var(--accent-gradient)',
+                color: 'var(--accent-contrast)',
               }}
             >
-              <FileSpreadsheet className="w-4 h-4" style={{ color: 'var(--primary-accent)' }} />
-              <span>الشيت والتصدير</span>
+              <Plus className="w-4 h-4" />
+              <span>حركة جديدة</span>
             </button>
             <button
               type="button"
               onClick={fetchData}
               title="تحديث البيانات"
+              aria-label="تحديث البيانات من الشيت"
               className="w-11 h-11 rounded-xl border flex items-center justify-center cursor-pointer shrink-0"
               style={{
                 background: 'var(--surface-soft)',
@@ -1659,23 +1791,120 @@ export default function App() {
           </div>
         </header>
 
+        {/* شريط الوضع التجريبي الصريح */}
+        {demoMode && (
+          <div
+            role="status"
+            className="rounded-2xl p-3.5 border flex flex-wrap items-center justify-between gap-3"
+            style={{
+              background: 'var(--info-bg)',
+              borderColor: 'var(--info)',
+              color: 'var(--text)',
+            }}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <FlaskConical className="w-5 h-5 shrink-0" style={{ color: 'var(--info)' }} />
+              <div className="min-w-0">
+                <div className="text-sm font-extrabold">وضع تجريبي — بيانات افتراضية</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  هذه أرقام تجريبية فقط ومنفصلة تماماً عن أي شيت حقيقي.
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  exitDemoMode();
+                  navigateTo('sheets');
+                }}
+                className="min-h-[40px] px-3.5 rounded-xl text-xs font-extrabold cursor-pointer"
+                style={{
+                  background: 'var(--accent-gradient)',
+                  color: 'var(--accent-contrast)',
+                }}
+              >
+                ربط شيتي الحقيقي
+              </button>
+              <button
+                type="button"
+                onClick={exitDemoMode}
+                className="min-h-[40px] px-3 rounded-xl border text-xs font-bold cursor-pointer"
+                style={{
+                  background: 'var(--card-bg)',
+                  borderColor: 'var(--border)',
+                  color: 'var(--text)',
+                }}
+              >
+                إنهاء التجربة
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* شاشة الرئيسية */}
         {activeTab === 'home' && (
           <div className="space-y-4">
-            {/* كارت إجمالي الأرصدة */}
+            {/* بطاقة الترحيب والربط الأولي عند عدم وجود شيت مربوط */}
+            {!isLinked && !demoMode && (
+              <section
+                aria-label="البدء مع التطبيق"
+                className="rounded-2xl p-5 border space-y-4"
+                style={{
+                  background: 'var(--card-bg)',
+                  borderColor: 'var(--primary-accent)',
+                  boxShadow: 'var(--shadow-md)',
+                }}
+              >
+                <div className="space-y-1.5">
+                  <h2 className="text-base sm:text-lg font-extrabold">مرحباً بك في M7FAZTY</h2>
+                  <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                    التطبيق غير مربوط بأي شيت Google Sheets بعد، ولا يحتوي على أي بيانات شخصية محفوظة. يمكنك ربط شيتك الخاص الآن أو استكشاف التطبيق ببيانات تجريبية افتراضية تماماً.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => navigateTo('sheets')}
+                    className="min-h-[44px] px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold inline-flex items-center gap-2 cursor-pointer"
+                    style={{
+                      background: 'var(--accent-gradient)',
+                      color: 'var(--accent-contrast)',
+                    }}
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span>ربط شيت Google Sheets الآن</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={enterDemoMode}
+                    className="min-h-[44px] px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
+                    style={{
+                      background: 'var(--surface-soft)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--text)',
+                    }}
+                  >
+                    <FlaskConical className="w-4 h-4" style={{ color: 'var(--info)' }} />
+                    <span>تشغيل وضع التجربة ببيانات افتراضية</span>
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {/* كارت إجمالي الأرصدة (مدمج وأوضح على الموبايل) */}
             <div
-              onClick={() => setGlobalVisible((v) => !v)}
-              className="rounded-3xl p-5 border cursor-pointer select-none relative overflow-hidden"
+              className="rounded-3xl p-4 border relative overflow-hidden"
               style={{
                 background: 'var(--hero-bg)',
                 borderColor: 'var(--hero-border)',
                 boxShadow: 'var(--hero-shadow)',
               }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
                   <div
-                    className="w-9 h-9 rounded-xl border flex items-center justify-center"
+                    className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0"
                     style={{
                       background: 'var(--surface-soft)',
                       borderColor: 'var(--hero-border)',
@@ -1688,43 +1917,50 @@ export default function App() {
                     إجمالي الأرصدة
                   </span>
                 </div>
-                <span
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-extrabold"
+                <button
+                  type="button"
+                  aria-pressed={globalVisible}
+                  aria-label={globalVisible ? 'إخفاء جميع الأرصدة' : 'إظهار جميع الأرصدة'}
+                  onClick={() => setGlobalVisible((v) => !v)}
+                  className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-extrabold cursor-pointer"
                   style={{
                     background: 'var(--surface-soft)',
                     borderColor: 'var(--hero-border)',
                     color: 'var(--hero-accent)',
                   }}
                 >
-                  {globalVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {globalVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   <span>{globalVisible ? 'إخفاء' : 'إظهار'}</span>
-                </span>
+                </button>
               </div>
 
-              <div className="text-3xl sm:text-4xl font-extrabold font-mono-num text-right" dir="ltr" style={{ color: 'var(--hero-text)' }}>
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono-num text-right" dir="ltr" style={{ color: 'var(--hero-text)' }}>
                 {globalVisible ? (
                   <>
                     {fmt(totalBalance)}{' '}
-                    <span className="text-base font-bold" style={{ color: 'var(--hero-accent)' }}>
+                    <span className="text-sm sm:text-base font-bold" style={{ color: 'var(--hero-accent)' }}>
                       ج.م
                     </span>
                   </>
                 ) : (
-                  <span className="tracking-widest text-2xl" style={{ color: 'var(--text-muted)' }}>
-                    •••• ••••
-                  </span>
+                  <>
+                    <span aria-hidden="true" className="tracking-widest text-2xl" style={{ color: 'var(--text-muted)' }}>
+                      •••• ••••
+                    </span>
+                    <span className="sr-only">الرصيد الإجمالي مخفي، اضغط على زر إظهار لعرضه</span>
+                  </>
                 )}
               </div>
 
               <div
-                className="flex items-center justify-between pt-3 mt-3 border-t text-xs font-bold"
+                className="flex flex-wrap items-center justify-between gap-2 pt-2.5 mt-2.5 border-t text-xs font-bold"
                 style={{ borderColor: 'var(--hero-border)', color: 'var(--text-muted)' }}
               >
-                <span>المحافظ النشطة: {state.accounts.length} حساب</span>
+                <span>الحسابات النشطة: {state.accounts.length}</span>
                 <span dir="ltr" style={{ color: 'var(--hero-accent)' }} className="font-mono-num">
                   {globalVisible
                     ? `صافي الشهر: ${monthStats.net > 0 ? '+' : ''}${fmt(monthStats.net)} ج.م`
-                    : 'اضغط للكشف السريع'}
+                    : 'الأرصدة مخفية لحماية الخصوصية'}
                 </span>
               </div>
             </div>
@@ -1777,14 +2013,14 @@ export default function App() {
             {/* شبكة الحسابات + آخر العمليات */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
               <div className="lg:col-span-7 space-y-2.5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <h2 className="text-sm font-extrabold" style={{ color: 'var(--text-muted)' }}>
                     الأرصدة والمحافظ والبنوك
                   </h2>
                   <button
                     type="button"
                     onClick={() => setAddAccountOpen(true)}
-                    className="px-3 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+                    className="min-h-[40px] px-3 py-2 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
                     style={{
                       background: 'var(--surface-soft)',
                       borderColor: 'var(--primary-accent)',
@@ -1796,64 +2032,93 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  {state.accounts.map((acc, idx) => {
-                    const visible = globalVisible || Boolean(unmaskedAccounts[idx]);
-                    const negative = acc.current < 0;
-                    return (
-                      <div
-                        key={acc.name}
-                        onClick={() =>
-                          setUnmaskedAccounts((u) => ({ ...u, [idx]: !u[idx] }))
-                        }
-                        className={`rounded-2xl p-3.5 border cursor-pointer select-none transition-colors ${
-                          idx === state.accounts.length - 1 && state.accounts.length % 2 === 1
-                            ? 'col-span-2'
-                            : ''
-                        }`}
-                        style={{
-                          background: 'var(--card-bg)',
-                          borderColor: 'var(--border)',
-                          boxShadow: 'var(--shadow-md)',
-                        }}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-extrabold truncate">{acc.name}</span>
-                          <span
-                            className="flex items-center gap-1 text-[11px] font-bold shrink-0"
-                            style={{ color: 'var(--text-muted)' }}
-                          >
-                            {accountKindIcon(acc.kind)}
-                            <span>{acc.kind || 'محفظة'}</span>
-                          </span>
-                        </div>
+                {state.accounts.length === 0 ? (
+                  <div
+                    className="rounded-2xl p-6 border text-center text-xs"
+                    style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                  >
+                    لا توجد حسابات مضافة بعد. اربط شيت Google Sheets أو أضف حساباً جديداً للبدء.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {state.accounts.map((acc, idx) => {
+                      const visible = globalVisible || Boolean(unmaskedAccounts[idx]);
+                      const negative = acc.current < 0;
+                      const toggleCard = () =>
+                        setUnmaskedAccounts((u) => ({ ...u, [idx]: !u[idx] }));
+                      return (
                         <div
-                          className="text-lg font-extrabold mt-2 text-right font-mono-num"
-                          dir="ltr"
+                          key={acc.name}
+                          role="button"
+                          tabIndex={0}
+                          aria-pressed={visible}
+                          aria-label={`${acc.name}، ${acc.kind || 'محفظة'}، ${
+                            visible ? `${fmt(acc.current)} جنيه` : 'الرصيد مخفي، اضغط للإظهار'
+                          }`}
+                          onClick={toggleCard}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              toggleCard();
+                            }
+                          }}
+                          className={`rounded-2xl p-3.5 border cursor-pointer select-none transition-colors ${
+                            idx === state.accounts.length - 1 && state.accounts.length % 2 === 1
+                              ? 'col-span-2'
+                              : ''
+                          }`}
                           style={{
-                            color: !visible
-                              ? 'var(--text-muted)'
-                              : negative
-                              ? 'var(--expense)'
-                              : 'var(--text)',
+                            background: 'var(--card-bg)',
+                            borderColor: 'var(--border)',
+                            boxShadow: 'var(--shadow-md)',
                           }}
                         >
-                          {visible ? (
-                            <>
-                              {negative ? '-' : ''}
-                              {fmt(Math.abs(acc.current))}{' '}
-                              <span className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
-                                ج.م
-                              </span>
-                            </>
-                          ) : (
-                            '••••••'
-                          )}
+                          <div className="flex items-start justify-between gap-2">
+                            <span
+                              className="text-sm font-extrabold leading-snug line-clamp-2 break-words"
+                              title={acc.name}
+                            >
+                              {acc.name}
+                            </span>
+                            <span
+                              className="flex items-center gap-1 text-xs font-bold shrink-0 pt-0.5"
+                              style={{ color: 'var(--text-muted)' }}
+                            >
+                              {accountKindIcon(acc.kind)}
+                              <span>{acc.kind || 'محفظة'}</span>
+                            </span>
+                          </div>
+                          <div
+                            className="text-lg font-extrabold mt-2 text-right font-mono-num"
+                            dir="ltr"
+                            style={{
+                              color: !visible
+                                ? 'var(--text-muted)'
+                                : negative
+                                ? 'var(--expense)'
+                                : 'var(--text)',
+                            }}
+                          >
+                            {visible ? (
+                              <>
+                                {negative ? '-' : ''}
+                                {fmt(Math.abs(acc.current))}{' '}
+                                <span className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
+                                  ج.م
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span aria-hidden="true">••••••</span>
+                                <span className="sr-only">الرصيد مخفي</span>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div
@@ -1911,6 +2176,8 @@ export default function App() {
             <div
               className="flex p-1 rounded-xl border gap-1 mb-4"
               style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
+              role="group"
+              aria-label="نوع الحركة"
             >
               {(['صرف', 'قبض', 'تحويل بين حسابات'] as TransactionType[]).map((t) => {
                 const active = txType === t;
@@ -1924,11 +2191,12 @@ export default function App() {
                   <button
                     key={t}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => {
                       setTxType(t);
                       setNewCatOpen(false);
                     }}
-                    className="flex-1 py-2.5 rounded-lg text-sm font-bold cursor-pointer transition-all"
+                    className="flex-1 min-h-[44px] py-2.5 rounded-lg text-sm font-bold cursor-pointer transition-all"
                     style={{
                       background: active ? 'var(--card-bg)' : 'transparent',
                       color: active ? activeColor : 'var(--text-muted)',
@@ -1959,7 +2227,7 @@ export default function App() {
                         ? `سداد مستحق (${isDebtLya(pendingDebtSettle.debtType) ? 'مدين ليا — قبض' : 'داين عليا — صرف'}): ${pendingDebtSettle.desc}`
                         : `دفع التزام: ${pendingReminderPay?.desc}`}
                     </div>
-                    <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       اختر الحساب والتصنيف ثم اضغط تسجيل ليتم التحديث في الشيت تلقائياً
                     </div>
                   </div>
@@ -1970,7 +2238,7 @@ export default function App() {
                     setPendingDebtSettle(null);
                     setPendingReminderPay(null);
                   }}
-                  className="px-2.5 py-1.5 rounded-lg border text-[11px] font-bold cursor-pointer shrink-0"
+                  className="min-h-[36px] px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer shrink-0"
                   style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
                 >
                   إلغاء الربط
@@ -1980,10 +2248,11 @@ export default function App() {
 
             <form onSubmit={handleTxSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-muted)' }}>
+                <label htmlFor="txAmountInput" className="block text-xs font-bold mb-1" style={{ color: 'var(--text-muted)' }}>
                   المبلغ (ج.م)
                 </label>
                 <input
+                  id="txAmountInput"
                   type="number"
                   step="0.01"
                   inputMode="decimal"
@@ -2000,7 +2269,7 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+              <div className="grid grid-cols-5 sm:grid-cols-9 gap-1.5" role="group" aria-label="مبالغ سريعة">
                 {[1, 5, 10, 50, 100, 200, 500, 1000].map((v) => (
                   <button
                     key={v}
@@ -2008,7 +2277,7 @@ export default function App() {
                     onClick={() =>
                       setTxAmount((prev) => ((parseFloat(prev) || 0) + v).toFixed(2))
                     }
-                    className="px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer shrink-0"
+                    className="min-h-[40px] px-1.5 py-2 rounded-lg border text-xs font-bold font-mono-num cursor-pointer"
                     style={{
                       background: 'var(--surface-soft)',
                       borderColor: 'var(--border)',
@@ -2021,7 +2290,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setTxAmount('')}
-                  className="px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer shrink-0"
+                  className="min-h-[40px] px-1.5 py-2 rounded-lg border text-xs font-bold cursor-pointer col-span-2 sm:col-span-1"
                   style={{
                     background: 'var(--surface-soft)',
                     borderColor: 'var(--border)',
@@ -2035,13 +2304,13 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
+                    <label htmlFor="fromAccSelect" className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
                       {txType === 'قبض' ? 'إيداع إلى' : txType === 'صرف' ? 'طريقة الدفع' : 'من حساب'}
                     </label>
                     <button
                       type="button"
                       onClick={() => setAddAccountOpen(true)}
-                      className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border cursor-pointer"
+                      className="text-xs font-extrabold px-2.5 py-1 rounded-md border cursor-pointer"
                       style={{
                         background: 'var(--surface-soft)',
                         borderColor: 'var(--primary-accent)',
@@ -2052,6 +2321,7 @@ export default function App() {
                     </button>
                   </div>
                   <select
+                    id="fromAccSelect"
                     value={fromAcc}
                     onChange={(e) => setFromAcc(e.target.value)}
                     className="w-full min-h-[46px] px-3 rounded-xl border text-sm font-bold outline-none"
@@ -2061,24 +2331,28 @@ export default function App() {
                       color: 'var(--text)',
                     }}
                   >
-                    {accountOptions.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
+                    {accountOptions.length === 0 ? (
+                      <option value="">أضف حساباً أولاً</option>
+                    ) : (
+                      accountOptions.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
                 {txType !== 'تحويل بين حسابات' ? (
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
+                      <label htmlFor="txCatSelect" className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
                         التصنيف
                       </label>
                       <button
                         type="button"
                         onClick={() => setNewCatOpen((v) => !v)}
-                        className="text-[11px] font-extrabold px-2 py-0.5 rounded-md border cursor-pointer"
+                        className="text-xs font-extrabold px-2.5 py-1 rounded-md border cursor-pointer"
                         style={{
                           background: 'var(--surface-soft)',
                           borderColor: 'var(--primary-accent)',
@@ -2089,6 +2363,7 @@ export default function App() {
                       </button>
                     </div>
                     <select
+                      id="txCatSelect"
                       value={txCat}
                       onChange={(e) => {
                         if (e.target.value === '__ADD_NEW__') {
@@ -2114,10 +2389,11 @@ export default function App() {
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-muted)' }}>
+                    <label htmlFor="toAccSelect" className="block text-xs font-bold mb-1" style={{ color: 'var(--text-muted)' }}>
                       إلى حساب
                     </label>
                     <select
+                      id="toAccSelect"
                       value={toAcc}
                       onChange={(e) => setToAcc(e.target.value)}
                       className="w-full min-h-[46px] px-3 rounded-xl border text-sm font-bold outline-none"
@@ -2391,13 +2667,14 @@ export default function App() {
               className="rounded-2xl p-4 border"
               style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', boxShadow: 'var(--shadow-md)' }}
             >
-              <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-3">
+              <div className="flex flex-wrap gap-1.5 mb-3" role="group" aria-label="تصفية المستحقات">
                 {(['all', 'مستحق', 'ليا', 'عليا', 'تم السداد'] as const).map((f) => (
                   <button
                     key={f}
                     type="button"
+                    aria-pressed={debtFilter === f}
                     onClick={() => setDebtFilter(f)}
-                    className="px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer shrink-0"
+                    className="min-h-[40px] px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer shrink-0"
                     style={{
                       background: debtFilter === f ? 'var(--accent-gradient)' : 'var(--surface-soft)',
                       borderColor: debtFilter === f ? 'transparent' : 'var(--border)',
@@ -2418,14 +2695,16 @@ export default function App() {
                   {filteredDebts.map((d, idx) => {
                     const isLya = isDebtLya(d.type);
                     const paid = d.status === 'تم السداد';
+                    const delKey = `debt-${d.id || idx}`;
+                    const confirming = confirmDeleteKey === delKey;
                     return (
                       <div
                         key={d.id || idx}
-                        className="py-3 flex items-center justify-between gap-2"
-                        style={{ opacity: paid ? 0.6 : 1 }}
+                        className="py-3 flex flex-wrap items-center justify-between gap-2"
+                        style={{ opacity: paid ? 0.65 : 1 }}
                       >
-                        <div>
-                          <div className="text-sm font-bold">{d.desc}</div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-bold break-words">{d.desc}</div>
                           <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                             <span style={{ color: isLya ? 'var(--income)' : 'var(--expense)' }} className="font-bold">
                               {isLya ? 'مدين (ليا)' : 'داين (عليا)'}
@@ -2443,12 +2722,12 @@ export default function App() {
                             dir="ltr"
                             style={{ color: isLya ? 'var(--income)' : 'var(--expense)' }}
                           >
-                            {fmt(d.amount)}
+                            {fmt(d.amount)} ج.م
                           </span>
                           <button
                             type="button"
                             onClick={() => (paid ? toggleDebtStatus(d) : handleStartDebtSettle(d))}
-                            className="px-2.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer"
+                            className="min-h-[40px] px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer"
                             style={{
                               background: 'var(--surface-soft)',
                               borderColor: paid ? 'var(--border)' : 'var(--primary-accent)',
@@ -2457,18 +2736,43 @@ export default function App() {
                           >
                             {paid ? 'إعادة فتح' : 'سداد ←'}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteDebt(d)}
-                            className="px-2.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer"
-                            style={{
-                              background: 'var(--surface-soft)',
-                              borderColor: 'var(--border)',
-                              color: 'var(--expense)',
-                            }}
-                          >
-                            ✕
-                          </button>
+                          {confirming ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmDeleteKey(null);
+                                  deleteDebt(d);
+                                }}
+                                className="min-h-[40px] px-2.5 rounded-lg text-xs font-extrabold cursor-pointer"
+                                style={{ background: 'var(--expense)', color: '#fff' }}
+                              >
+                                تأكيد الحذف
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteKey(null)}
+                                className="min-h-[40px] px-2.5 rounded-lg border text-xs font-bold cursor-pointer"
+                                style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
+                              >
+                                إلغاء
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              aria-label={`حذف مستحق ${d.desc}`}
+                              onClick={() => setConfirmDeleteKey(delKey)}
+                              className="min-h-[40px] min-w-[40px] rounded-lg border text-xs font-bold flex items-center justify-center cursor-pointer"
+                              style={{
+                                background: 'var(--surface-soft)',
+                                borderColor: 'var(--border)',
+                                color: 'var(--expense)',
+                              }}
+                            >
+                              ✕
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -2606,7 +2910,7 @@ export default function App() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-sm font-extrabold font-mono-num" dir="ltr" style={{ color: 'var(--expense)' }}>
-                              {fmt(r.amount)}
+                              {fmt(r.amount)} ج.م
                             </span>
                             {!paid && (
                               <button
@@ -2628,7 +2932,7 @@ export default function App() {
                                   window.scrollTo({ top: 0, behavior: 'smooth' });
                                   notify('اختر الحساب والتصنيف واضغط تسجيل الحركة');
                                 }}
-                                className="px-2.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer"
+                                className="min-h-[40px] px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer"
                                 style={{
                                   background: 'var(--surface-soft)',
                                   borderColor: 'var(--primary-accent)',
@@ -2638,18 +2942,43 @@ export default function App() {
                                 سداد ←
                               </button>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => deleteReminder(r)}
-                              className="px-2.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer"
-                              style={{
-                                background: 'var(--surface-soft)',
-                                borderColor: 'var(--border)',
-                                color: 'var(--expense)',
-                              }}
-                            >
-                              ✕
-                            </button>
+                            {confirmDeleteKey === `rem-${r.id || idx}` ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setConfirmDeleteKey(null);
+                                    deleteReminder(r);
+                                  }}
+                                  className="min-h-[40px] px-2.5 rounded-lg text-xs font-extrabold cursor-pointer"
+                                  style={{ background: 'var(--expense)', color: '#fff' }}
+                                >
+                                  تأكيد الحذف
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteKey(null)}
+                                  className="min-h-[40px] px-2.5 rounded-lg border text-xs font-bold cursor-pointer"
+                                  style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
+                                >
+                                  إلغاء
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label={`حذف التزام ${r.desc}`}
+                                onClick={() => setConfirmDeleteKey(`rem-${r.id || idx}`)}
+                                className="min-h-[40px] min-w-[40px] rounded-lg border text-xs font-bold flex items-center justify-center cursor-pointer"
+                                style={{
+                                  background: 'var(--surface-soft)',
+                                  borderColor: 'var(--border)',
+                                  color: 'var(--expense)',
+                                }}
+                              >
+                                ✕
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
@@ -2660,14 +2989,32 @@ export default function App() {
           </div>
         )}
 
-        {/* شاشة السجل */}
+        {/* شاشة السجل (مجمّعة بالتاريخ) */}
         {activeTab === 'history' && (
           <div
             className="max-w-3xl mx-auto rounded-2xl p-4 border space-y-3"
             style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', boxShadow: 'var(--shadow-md)' }}
           >
+            {queue.length > 0 && (
+              <div
+                className="p-3 rounded-xl border flex items-center justify-between gap-2 text-xs font-bold"
+                style={{ background: 'var(--warning-bg)', borderColor: 'var(--warning)', color: 'var(--warning)' }}
+              >
+                <span>يوجد {queue.length} حركة بانتظار المزامنة عند توفر الإنترنت</span>
+                <button
+                  type="button"
+                  onClick={flushQueue}
+                  className="min-h-[36px] px-3 rounded-lg border cursor-pointer"
+                  style={{ background: 'var(--card-bg)', borderColor: 'var(--warning)', color: 'var(--text)' }}
+                >
+                  إرسال الآن
+                </button>
+              </div>
+            )}
+
             <input
-              type="text"
+              type="search"
+              aria-label="بحث في سجل المعاملات"
               value={historySearch}
               onChange={(e) => setHistorySearch(e.target.value)}
               placeholder="ابحث بالبيان أو التصنيف أو الحساب..."
@@ -2675,13 +3022,14 @@ export default function App() {
               style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)', color: 'var(--text)' }}
             />
 
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="تصفية المعاملات">
               {(['all', 'صرف', 'قبض', 'تحويل'] as const).map((f) => (
                 <button
                   key={f}
                   type="button"
+                  aria-pressed={historyFilter === f}
                   onClick={() => setHistoryFilter(f)}
-                  className="px-3.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer shrink-0"
+                  className="min-h-[40px] px-3.5 py-1.5 rounded-lg border text-xs font-bold cursor-pointer shrink-0"
                   style={{
                     background: historyFilter === f ? 'var(--accent-gradient)' : 'var(--surface-soft)',
                     borderColor: historyFilter === f ? 'transparent' : 'var(--border)',
@@ -2693,65 +3041,94 @@ export default function App() {
               ))}
             </div>
 
-            {filteredHistory.length === 0 ? (
+            {groupedHistory.length === 0 ? (
               <div className="text-center py-8 text-xs" style={{ color: 'var(--text-muted)' }}>
                 لا توجد معاملات مطابقة
               </div>
             ) : (
-              <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-                {filteredHistory.map((t, idx) => (
-                  <TxRow
-                    key={`${t.row || idx}-${t.date}`}
-                    tx={t}
-                    onClick={() => t.row && setSelectedTx(t)}
-                  />
+              <div className="space-y-4">
+                {groupedHistory.map((group) => (
+                  <div key={group.dateKey}>
+                    <div
+                      className="text-xs font-extrabold pb-1.5 mb-1 border-b"
+                      style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+                    >
+                      {group.label}
+                    </div>
+                    <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                      {group.items.map((t, idx) => (
+                        <TxRow
+                          key={`${t.row || idx}-${t.date}-${t.amount}`}
+                          tx={t}
+                          hideDate
+                          onClick={() => t.row && setSelectedTx(t)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* شاشة التحليلات */}
+        {/* شاشة التحليلات (تحميل كسول لتحسين الأداء) */}
         {activeTab === 'stats' && (
-          <AnalyticsSection
-            transactions={state.recent}
-            budgets={budgets}
-            storageKey={sheetStorageKey}
-            onSelectBudgetCat={(cat, curBud) => {
-              setBudgetModalCat(cat);
-              setBudgetModalVal(curBud ? String(curBud) : '');
-            }}
-          />
+          <Suspense
+            fallback={
+              <div className="rounded-2xl p-8 border text-center text-sm font-bold" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                جاري تحميل التحليلات...
+              </div>
+            }
+          >
+            <AnalyticsSection
+              transactions={state.recent}
+              budgets={budgets}
+              storageKey={sheetStorageKey}
+              onSelectBudgetCat={(cat, curBud) => {
+                setBudgetModalCat(cat);
+                setBudgetModalVal(curBud ? String(curBud) : '');
+              }}
+            />
+          </Suspense>
         )}
 
-        {/* شاشة استوديو Google Sheets وتنزيل HTML / Apps Script */}
+        {/* شاشة استوديو Google Sheets وتنزيل HTML / Apps Script (تحميل كسول) */}
         {activeTab === 'sheets' && (
           <div className="max-w-3xl mx-auto">
-            <SheetStudioPanel
-              googleUserEmail={googleEmail}
-              hasGoogleToken={Boolean(googleToken)}
-              isLoggingIn={isLoggingIn}
-              onGoogleLogin={handleGoogleLogin}
-              onGoogleLogout={handleGoogleLogout}
-              profileName={profileName}
-              onProfileNameChange={setProfileName}
-              spreadsheetIdInput={spreadsheetId}
-              onSpreadsheetIdChange={setSpreadsheetId}
-              scriptUrlInput={scriptUrl}
-              onScriptUrlChange={setScriptUrl}
-              inspectionReport={inspectionReport}
-              isInspecting={isInspecting}
-              onInspectSheet={handleInspectSheet}
-              onFormatWorkbook={handleFormatWorkbook}
-              existingSheets={existingSheets}
-              isSearchingDrive={isSearchingDrive}
-              onSearchExistingSheets={handleSearchExistingSheets}
-              onSelectExistingSheet={handleSelectExistingSheet}
-              onCreateNewSheet={handleCreateNewSheet}
-              onTestScriptConnection={handleTestScriptConnection}
-              isTestingScript={isTestingScript}
-              onNotify={notify}
-            />
+            <Suspense
+              fallback={
+                <div className="rounded-2xl p-8 border text-center text-sm font-bold" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                  جاري تحميل استوديو الشيت...
+                </div>
+              }
+            >
+              <SheetStudioPanel
+                googleUserEmail={googleEmail}
+                hasGoogleToken={Boolean(googleToken)}
+                isLoggingIn={isLoggingIn}
+                onGoogleLogin={handleGoogleLogin}
+                onGoogleLogout={handleGoogleLogout}
+                profileName={profileName}
+                onProfileNameChange={setProfileName}
+                spreadsheetIdInput={spreadsheetId}
+                onSpreadsheetIdChange={setSpreadsheetId}
+                scriptUrlInput={scriptUrl}
+                onScriptUrlChange={setScriptUrl}
+                inspectionReport={inspectionReport}
+                isInspecting={isInspecting}
+                onInspectSheet={handleInspectSheet}
+                onFormatWorkbook={handleFormatWorkbook}
+                existingSheets={existingSheets}
+                isSearchingDrive={isSearchingDrive}
+                onSearchExistingSheets={handleSearchExistingSheets}
+                onSelectExistingSheet={handleSelectExistingSheet}
+                onCreateNewSheet={handleCreateNewSheet}
+                onTestScriptConnection={handleTestScriptConnection}
+                isTestingScript={isTestingScript}
+                onNotify={notify}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -2770,18 +3147,19 @@ export default function App() {
                   </div>
                   <div>
                     <h2 className="text-sm font-extrabold">ثيمات التطبيق</h2>
-                    <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       تُغيّر الألوان والخطوط وشكل الأيقونات والبطاقات بالكامل
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
+                  aria-pressed={themePref === 'auto'}
                   onClick={() => {
                     setThemePref('auto');
                     notify('تم تفعيل الثيم التلقائي');
                   }}
-                  className="px-3 py-1.5 rounded-xl border text-[11px] font-bold cursor-pointer shrink-0"
+                  className="min-h-[40px] px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer shrink-0"
                   style={{
                     background: themePref === 'auto' ? 'var(--accent-gradient)' : 'var(--surface-soft)',
                     borderColor: themePref === 'auto' ? 'transparent' : 'var(--border)',
@@ -2799,11 +3177,12 @@ export default function App() {
                     <button
                       key={t.id}
                       type="button"
+                      aria-pressed={active}
                       onClick={() => {
                         setThemePref(t.id);
                         notify(`تم تفعيل ثيم ${t.name}`);
                       }}
-                      className="p-2 rounded-xl border-2 cursor-pointer text-right transition-all flex flex-col gap-1.5"
+                      className="p-2.5 rounded-xl border-2 cursor-pointer text-right transition-all flex flex-col gap-1.5"
                       style={{
                         background: active ? 'var(--card-bg)' : 'var(--surface-soft)',
                         borderColor: active ? 'var(--primary-accent)' : 'var(--border)',
@@ -2819,8 +3198,8 @@ export default function App() {
                         <span className="flex-1 h-full" style={{ background: t.previewSwatches[2] }} />
                       </div>
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-[11px] font-extrabold truncate">{t.name}</span>
-                        <span className="text-[9px] font-bold shrink-0" style={{ color: 'var(--text-muted)' }}>
+                        <span className="text-xs font-extrabold truncate">{t.name}</span>
+                        <span className="text-[11px] font-bold shrink-0" style={{ color: 'var(--text-muted)' }}>
                           {t.badge}
                         </span>
                       </div>
@@ -2846,17 +3225,18 @@ export default function App() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-bold">اسمك / اسم المحفظة</div>
-                      <div className="text-[11px] truncate font-mono-num" style={{ color: 'var(--text-muted)' }}>
+                      <div className="text-xs truncate font-mono-num" style={{ color: 'var(--text-muted)' }}>
                         {buildM7faztySheetName(profileName)}
                       </div>
                     </div>
                   </div>
                   <input
                     type="text"
+                    aria-label="اسمك أو اسم المحفظة"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     placeholder="أدخل اسمك..."
-                    className="h-9 px-3 rounded-xl border text-xs font-bold outline-none w-44"
+                    className="h-10 px-3 rounded-xl border text-xs font-bold outline-none w-44"
                     style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)', color: 'var(--text)' }}
                   />
                 </div>
@@ -2868,7 +3248,7 @@ export default function App() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-bold">استوديو Google Sheets والنسخة المستقلة</div>
-                      <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                         فحص الشيت، إصلاح المعادلات، وتنزيل HTML و Code.gs
                       </div>
                     </div>
@@ -2877,21 +3257,23 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => navigateTo('sheets')}
-                      className="h-9 px-3 rounded-xl border text-xs font-bold cursor-pointer"
+                      className="min-h-[40px] px-3 rounded-xl border text-xs font-bold cursor-pointer"
                       style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
                     >
                       فتح الاستوديو
                     </button>
-                    <a
-                      href={`https://docs.google.com/spreadsheets/d/${extractSpreadsheetId(spreadsheetId)}/edit`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="h-9 px-3 rounded-xl border text-xs font-bold inline-flex items-center gap-1"
-                      style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)', color: 'var(--text)' }}
-                    >
-                      <span>الشيت</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                    {extractSpreadsheetId(spreadsheetId) && (
+                      <a
+                        href={`https://docs.google.com/spreadsheets/d/${extractSpreadsheetId(spreadsheetId)}/edit`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="min-h-[40px] px-3 rounded-xl border text-xs font-bold inline-flex items-center gap-1"
+                        style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)', color: 'var(--text)' }}
+                      >
+                        <span>الشيت</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2913,7 +3295,7 @@ export default function App() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-bold">تعديل نوع الحسابات بأمان</div>
-                      <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                         تصحيح نوع حساب (بنك / خزنة / محفظة / بطاقة) في الشيت بـ 3 خطوات مؤمّنة
                       </div>
                     </div>
@@ -2921,7 +3303,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setAccountKindModalOpen(true)}
-                    className="h-9 px-3.5 rounded-xl border text-xs font-bold cursor-pointer"
+                    className="min-h-[40px] px-3.5 rounded-xl border text-xs font-bold cursor-pointer"
                     style={{
                       background: 'var(--surface-soft)',
                       borderColor: 'var(--primary-accent)',
@@ -2933,14 +3315,17 @@ export default function App() {
                 </div>
 
                 <div className="py-3 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="theme-icon-box">
                       <KeyRound className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-bold">رمز PIN الحماية (اختياري)</div>
-                      <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                         {storedPin ? 'مُفعّل — يمكنك تغييره أو تعطيله في أي وقت' : 'غير مُفعّل — يمكنك تعيين رمز من 4 أرقام'}
+                      </div>
+                      <div className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--warning)' }}>
+                        تنبيه: رمز PIN هو قفل للواجهة على هذا المتصفح فقط وليس تشفيراً للبيانات (يمكن تجاوزه عبر أدوات المطور).
                       </div>
                     </div>
                   </div>
@@ -2948,7 +3333,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setPinOverlay({ open: true, mode: storedPin ? 'change' : 'setup' })}
-                      className="h-9 px-3 rounded-xl border text-xs font-bold cursor-pointer"
+                      className="min-h-[40px] px-3 rounded-xl border text-xs font-bold cursor-pointer"
                       style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
                     >
                       {storedPin ? 'تغيير' : 'تعيين PIN'}
@@ -2958,7 +3343,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => setPinOverlay({ open: true, mode: 'unlock' })}
-                          className="h-9 px-3 rounded-xl border text-xs font-bold cursor-pointer"
+                          className="min-h-[40px] px-3 rounded-xl border text-xs font-bold cursor-pointer"
                           style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
                         >
                           قفل
@@ -2970,7 +3355,7 @@ export default function App() {
                             setStoredPin(null);
                             notify('تم إلغاء رمز PIN بنجاح');
                           }}
-                          className="h-9 px-3 rounded-xl border text-xs font-bold cursor-pointer"
+                          className="min-h-[40px] px-3 rounded-xl border text-xs font-bold cursor-pointer"
                           style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)', color: 'var(--expense)' }}
                         >
                           إلغاء
@@ -3106,25 +3491,91 @@ export default function App() {
             </div>
           </div>
         )}
+        </main>
       </div>
 
-      {/* زر الإضافة السريعة العائم */}
-      {activeTab !== 'add' && (
-        <button
-          type="button"
-          onClick={() => navigateTo('add')}
-          title="إضافة حركة جديدة"
-          aria-label="إضافة حركة جديدة"
-          className="fixed bottom-5 left-5 w-14 h-14 rounded-2xl flex items-center justify-center cursor-pointer z-30 transition-transform hover:-translate-y-0.5 active:scale-95"
-          style={{
-            background: 'var(--accent-gradient)',
-            color: 'var(--accent-contrast)',
-            boxShadow: '0 12px 28px -6px var(--accent-shadow)',
-          }}
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      )}
+      {/* شريط التنقل السفلي للموبايل والتابلت (مدمج به زر الإضافة بدون تغطية المحتوى) */}
+      <nav
+        aria-label="شريط التنقل السفلي"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-30 border-t backdrop-blur-md bottom-nav-safe"
+        style={{
+          background: 'var(--header-bg)',
+          borderColor: 'var(--border)',
+        }}
+      >
+        <div className="grid grid-cols-5 items-center h-16 max-w-xl mx-auto px-1">
+          <button
+            type="button"
+            aria-current={activeTab === 'home' ? 'page' : undefined}
+            onClick={() => navigateTo('home')}
+            className="flex flex-col items-center justify-center gap-0.5 min-h-[48px] cursor-pointer"
+            style={{ color: activeTab === 'home' ? 'var(--primary-accent)' : 'var(--text-muted)' }}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[11px] font-bold">الرئيسية</span>
+          </button>
+
+          <button
+            type="button"
+            aria-current={activeTab === 'history' ? 'page' : undefined}
+            onClick={() => navigateTo('history')}
+            className="flex flex-col items-center justify-center gap-0.5 min-h-[48px] cursor-pointer"
+            style={{ color: activeTab === 'history' ? 'var(--primary-accent)' : 'var(--text-muted)' }}
+          >
+            <FileText className="w-5 h-5" />
+            <span className="text-[11px] font-bold">السجل</span>
+          </button>
+
+          <button
+            type="button"
+            aria-label="إضافة حركة جديدة"
+            aria-current={activeTab === 'add' ? 'page' : undefined}
+            onClick={() => navigateTo('add')}
+            className="flex items-center justify-center cursor-pointer"
+          >
+            <span
+              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform active:scale-95"
+              style={{
+                background: 'var(--accent-gradient)',
+                color: 'var(--accent-contrast)',
+                boxShadow: '0 6px 16px -4px var(--accent-shadow)',
+              }}
+            >
+              <Plus className="w-6 h-6" />
+            </span>
+          </button>
+
+          <button
+            type="button"
+            aria-current={activeTab === 'debts' ? 'page' : undefined}
+            onClick={() => navigateTo('debts')}
+            className="flex flex-col items-center justify-center gap-0.5 min-h-[48px] cursor-pointer relative"
+            style={{ color: activeTab === 'debts' ? 'var(--primary-accent)' : 'var(--text-muted)' }}
+          >
+            <Wallet className="w-5 h-5" />
+            <span className="text-[11px] font-bold">المستحقات</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="المزيد من الشاشات"
+            className="flex flex-col items-center justify-center gap-0.5 min-h-[48px] cursor-pointer"
+            style={{
+              color:
+                activeTab === 'reminders' ||
+                activeTab === 'stats' ||
+                activeTab === 'sheets' ||
+                activeTab === 'settings'
+                  ? 'var(--primary-accent)'
+                  : 'var(--text-muted)',
+            }}
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            <span className="text-[11px] font-bold">المزيد</span>
+          </button>
+        </div>
+      </nav>
 
       {/* مودال إضافة محفظة / بنك / خزنة */}
       <AddAccountModal
@@ -3138,7 +3589,11 @@ export default function App() {
         open={accountKindModalOpen}
         accounts={state.accounts}
         storedPin={storedPin}
-        sheetUrl={`https://docs.google.com/spreadsheets/d/${extractSpreadsheetId(spreadsheetId)}/edit`}
+        sheetUrl={
+          extractSpreadsheetId(spreadsheetId)
+            ? `https://docs.google.com/spreadsheets/d/${extractSpreadsheetId(spreadsheetId)}/edit`
+            : ''
+        }
         onClose={() => setAccountKindModalOpen(false)}
         onConfirmChange={handleUpdateAccountKind}
       />
@@ -3178,7 +3633,7 @@ export default function App() {
                   if (/^\d{4}-\d{2}-\d{2}$/.test(t.date)) setTxDate(t.date);
                   setActiveTab('add');
                 }}
-                className="py-2.5 rounded-xl border text-xs font-bold cursor-pointer"
+                className="min-h-[44px] py-2.5 rounded-xl border text-xs font-bold cursor-pointer"
                 style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
               >
                 تعديل
@@ -3186,7 +3641,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleDeleteTx}
-                className="py-2.5 rounded-xl border text-xs font-bold cursor-pointer"
+                className="min-h-[44px] py-2.5 rounded-xl border text-xs font-bold cursor-pointer"
                 style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)', color: 'var(--expense)' }}
               >
                 حذف
@@ -3195,7 +3650,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setSelectedTx(null)}
-              className="w-full py-2 text-xs font-bold cursor-pointer"
+              className="w-full min-h-[40px] py-2 text-xs font-bold cursor-pointer"
               style={{ color: 'var(--text-muted)' }}
             >
               إغلاق
@@ -3230,7 +3685,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setBudgetModalCat(null)}
-                className="px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer"
+                className="min-h-[40px] px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer"
                 style={{ background: 'var(--surface-soft)', borderColor: 'var(--border)' }}
               >
                 إلغاء
@@ -3243,11 +3698,13 @@ export default function App() {
                   if (val > 0) next[budgetModalCat] = val;
                   else delete next[budgetModalCat];
                   setBudgets(next);
-                  localStorage.setItem(`mf_budgets::${sheetStorageKey}`, JSON.stringify(next));
+                  if (!demoMode && sheetStorageKey !== 'unlinked') {
+                    localStorage.setItem(`mf_budgets::${sheetStorageKey}`, JSON.stringify(next));
+                  }
                   setBudgetModalCat(null);
                   notify('تم تحديث الميزانية');
                 }}
-                className="px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer"
+                className="min-h-[40px] px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer"
                 style={{ background: 'var(--accent-gradient)', color: 'var(--accent-contrast)' }}
               >
                 حفظ
@@ -3260,6 +3717,8 @@ export default function App() {
       {/* Toast */}
       {toastMsg && (
         <div
+          role="status"
+          aria-live="polite"
           className="fixed bottom-20 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full text-xs font-bold z-[10000] shadow-lg max-w-[90vw] text-center"
           style={{ background: 'var(--text)', color: 'var(--bg)' }}
         >
@@ -3270,7 +3729,15 @@ export default function App() {
   );
 }
 
-function TxRow({ tx, onClick }: { tx: TransactionItem; onClick?: () => void }) {
+function TxRow({
+  tx,
+  onClick,
+  hideDate = false,
+}: {
+  tx: TransactionItem;
+  onClick?: () => void;
+  hideDate?: boolean;
+}) {
   const isIncome = tx.type === 'قبض' || tx.type === 'دخل';
   const isTransfer = tx.type.includes('تحويل');
   const color = isIncome ? 'var(--income)' : isTransfer ? 'var(--transfer)' : 'var(--expense)';
@@ -3279,18 +3746,31 @@ function TxRow({ tx, onClick }: { tx: TransactionItem; onClick?: () => void }) {
 
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       className={`py-3 flex items-center justify-between gap-2 ${onClick ? 'cursor-pointer' : ''}`}
     >
       <div className="min-w-0">
         <div className="text-sm font-bold truncate">{tx.desc || tx.category || tx.type}</div>
         <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-          {tx.category} · {accText} · {tx.date}
+          {tx.category} · {accText}
+          {!hideDate && tx.date ? ` · ${tx.date}` : ''}
         </div>
       </div>
       <span className="text-sm font-extrabold font-mono-num shrink-0" dir="ltr" style={{ color }}>
         {sign}
-        {fmt(cleanNumber(tx.amount))}
+        {fmt(cleanNumber(tx.amount))} ج.م
       </span>
     </div>
   );

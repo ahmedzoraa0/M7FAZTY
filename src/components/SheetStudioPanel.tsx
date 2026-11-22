@@ -328,8 +328,9 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
           <button
             type="button"
             disabled={!hasGoogleToken || isSearchingDrive}
+            title={!hasGoogleToken ? 'سجّل الدخول بحساب جوجل أولاً لتفعيل هذا الزر' : undefined}
             onClick={handleOpenCreateFlow}
-            className="px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 cursor-pointer disabled:opacity-45"
+            className="min-h-[42px] px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
             style={{
               background: 'var(--accent-gradient)',
               color: 'var(--accent-contrast)',
@@ -343,8 +344,9 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
           <button
             type="button"
             disabled={!hasGoogleToken || isSearchingDrive}
+            title={!hasGoogleToken ? 'سجّل الدخول بحساب جوجل أولاً للبحث في Drive' : undefined}
             onClick={() => onSearchExistingSheets(profileName)}
-            className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45"
+            className="min-h-[42px] px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
             style={{
               background: 'var(--surface-soft)',
               borderColor: 'var(--border)',
@@ -357,9 +359,16 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
 
           <button
             type="button"
-            disabled={!hasGoogleToken || isInspecting}
+            disabled={!hasGoogleToken || isInspecting || !cleanSheetId}
+            title={
+              !hasGoogleToken
+                ? 'سجّل الدخول بحساب جوجل أولاً'
+                : !cleanSheetId
+                ? 'أدخل رابط أو معرّف Google Sheet أولاً'
+                : undefined
+            }
             onClick={onInspectSheet}
-            className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45"
+            className="min-h-[42px] px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
             style={{
               background: 'var(--surface-soft)',
               borderColor: 'var(--border)',
@@ -372,9 +381,16 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
 
           <button
             type="button"
-            disabled={!hasGoogleToken}
+            disabled={!hasGoogleToken || !cleanSheetId}
+            title={
+              !hasGoogleToken
+                ? 'سجّل الدخول بحساب جوجل أولاً'
+                : !cleanSheetId
+                ? 'أدخل رابط أو معرّف Google Sheet أولاً'
+                : undefined
+            }
             onClick={() => setShowFormatConfirm(true)}
-            className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45"
+            className="min-h-[42px] px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
             style={{
               background: 'var(--surface-soft)',
               borderColor: 'var(--primary-accent)',
@@ -388,8 +404,9 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
           <button
             type="button"
             disabled={isTestingScript || !scriptUrlInput.trim()}
+            title={!scriptUrlInput.trim() ? 'أدخل رابط Apps Script (Web App URL) أولاً' : undefined}
             onClick={onTestScriptConnection}
-            className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45"
+            className="min-h-[42px] px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
             style={{
               background: 'var(--surface-soft)',
               borderColor: 'var(--border)',
@@ -405,7 +422,7 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
               href={`https://docs.google.com/spreadsheets/d/${cleanSheetId}/edit`}
               target="_blank"
               rel="noreferrer"
-              className="px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 no-underline"
+              className="min-h-[42px] px-4 py-2.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 no-underline"
               style={{
                 background: 'var(--surface-soft)',
                 borderColor: 'var(--border)',
@@ -417,6 +434,12 @@ export const SheetStudioPanel: React.FC<SheetStudioPanelProps> = ({
             </a>
           )}
         </div>
+
+        {!hasGoogleToken && (
+          <p className="text-xs mt-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            ملاحظة: أزرار إنشاء وفحص وتنسيق الشيت المباشرة تتطلب تسجيل الدخول بحساب جوجل بالأعلى؛ بينما يمكنك دائماً لصق رابط Web App URL واختباره أو تحميل ملف HTML وكود Code.gs بدون تسجيل دخول.
+          </p>
+        )}
 
         {/* شيتات M7FAZTY المكتشفة على Drive */}
         {hasGoogleToken && existingSheets.length > 0 && (

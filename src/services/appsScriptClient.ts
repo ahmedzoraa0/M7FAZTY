@@ -1,10 +1,8 @@
 import { FinanceState } from '../types';
 
-export const DEFAULT_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbwA4Mnxrz8cTM6Kh8Zt21oeIP0YzkhJo69QCSHrWY6pcR5YX8rYAknOC9WUayI05urp/exec';
+export const DEFAULT_SCRIPT_URL = '';
 
-export const DEFAULT_SPREADSHEET_ID =
-  '1FPTv7C_rNgHdn2bpTsjs2hQEXHDEvdk5C1TiQEb35ak';
+export const DEFAULT_SPREADSHEET_ID = '';
 
 export function cleanNumber(val: unknown): number {
   if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
