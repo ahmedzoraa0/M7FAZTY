@@ -137,6 +137,18 @@ ${themeCssBlocks}
       transition: background-color 0.22s ease, color 0.22s ease;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     :is(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
       outline: 2.5px solid var(--primary-accent);
       outline-offset: 2px;
@@ -476,13 +488,13 @@ ${themeCssBlocks}
       position: relative;
       overflow: hidden;
       background: var(--hero-bg);
-      border: 1px solid var(--hero-border);
-      border-radius: 24px;
-      padding: 20px 22px 16px;
+      border: var(--border-w) solid var(--hero-border);
+      border-radius: var(--radius-card);
+      padding: 16px 18px 14px;
       box-shadow: var(--hero-shadow);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 10px;
       cursor: pointer;
       user-select: none;
       transition: transform 0.18s ease;
@@ -776,6 +788,54 @@ ${themeCssBlocks}
     .amt-inc { color: var(--income); }
     .amt-tra { color: var(--transfer); }
 
+    .history-date-group { margin-bottom: 14px; }
+    .history-date-group:last-child { margin-bottom: 0; }
+    .history-date-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: var(--radius-btn);
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .queue-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border-radius: var(--radius-card);
+      border: 1.5px solid var(--warning);
+      background: var(--warning-bg);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .queue-banner.show { display: flex; }
+    .inline-confirm-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .btn-danger-solid {
+      min-height: 36px;
+      padding: 6px 10px;
+      border-radius: var(--radius-btn);
+      border: none;
+      background: var(--expense);
+      color: #ffffff;
+      font-size: 0.76rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
     .state-txt { font-weight: 800; font-size: 0.76rem; }
     .state-lya { color: var(--income); }
     .state-alya { color: var(--expense); }
@@ -809,7 +869,7 @@ ${themeCssBlocks}
       border-radius: var(--radius-card);
       border-width: var(--border-w);
     }
-    .btn-submit, .btn-secondary, .input-ctrl, .select-ctrl, .action-link-btn, .f-chip, .menu-toggle-btn, .icon-btn, .fab-add {
+    .btn-submit, .btn-secondary, .input-ctrl, .select-ctrl, .action-link-btn, .f-chip, .menu-toggle-btn, .icon-btn, .bottom-nav-add {
       border-radius: var(--radius-btn);
     }
     .stat-value, .acc-value, .tx-amt { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
@@ -947,33 +1007,93 @@ ${themeCssBlocks}
       box-shadow: var(--shadow-md);
     }
 
-    /* ===== زر الإضافة العائم (FAB) ===== */
-    .fab-add {
+    /* ===== شريط التنقل السفلي للهاتف ===== */
+    .mobile-bottom-nav {
       position: fixed;
-      bottom: 22px;
-      left: 20px;
-      width: 54px;
-      height: 54px;
-      border-radius: 18px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 950;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      align-items: end;
+      gap: 2px;
+      padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+      background: var(--header-bg);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+      border-top: var(--border-w) solid var(--border);
+      box-shadow: 0 -8px 24px -10px rgba(0, 0, 0, 0.16);
+    }
+    .bottom-nav-btn {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      min-height: 48px;
+      padding: 4px 2px;
+      border: none;
+      border-radius: var(--radius-btn);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: color 0.16s ease, background-color 0.16s ease;
+    }
+    .bottom-nav-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; }
+    .bottom-nav-btn.active { color: var(--primary-accent); background: var(--surface-soft); }
+    .bottom-nav-badge {
+      position: absolute;
+      top: 2px;
+      left: calc(50% - 20px);
+      min-width: 17px;
+      height: 17px;
+      padding: 0 4px;
+      border-radius: 99px;
+      background: var(--expense);
+      color: #ffffff;
+      font-size: 0.64rem;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-num);
+    }
+    .bottom-nav-badge.show { display: inline-flex; }
+    .bottom-nav-add-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .bottom-nav-add {
+      width: 48px;
+      height: 48px;
+      margin-top: -18px;
+      border-radius: var(--radius-btn);
       background: var(--accent-gradient);
       color: var(--accent-contrast);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      box-shadow: 0 12px 28px -6px var(--accent-shadow);
+      border: 2px solid var(--card-bg);
+      box-shadow: 0 10px 22px -6px var(--accent-shadow);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 900;
-      transition: transform 0.18s ease, opacity 0.2s ease;
+      transition: transform 0.15s ease;
     }
-    .fab-add.hidden { opacity: 0; pointer-events: none; transform: scale(0.85); }
+    .bottom-nav-add:active { transform: scale(0.92); }
+    .bottom-nav-add.active { box-shadow: 0 0 0 3px var(--primary-accent), 0 10px 22px -6px var(--accent-shadow); }
+    .bottom-nav-add-label { font-size: 0.68rem; font-weight: 800; color: var(--primary-accent); margin-top: 2px; }
 
     .tab-content { display: none; flex-direction: column; gap: 16px; }
     .tab-content.active { display: flex; }
 
     .toast {
       position: fixed;
-      bottom: 84px;
+      bottom: calc(84px + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
       background: var(--text);
@@ -990,15 +1110,40 @@ ${themeCssBlocks}
     }
 
     @media (min-width: 760px) {
-      body { padding: 20px 24px 60px; }
+      body { padding: 20px 24px calc(94px + env(safe-area-inset-bottom, 0px)); }
       .app-container { gap: 20px; }
       #tabHome.active { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.85fr); align-items: start; gap: 18px; }
       #tabHome > #totalCard, #tabHome > .overview-row { grid-column: 1 / -1; }
       #tabHome > #accountsSection { grid-column: 1; }
       #tabHome > #recentHomeCard { grid-column: 2; grid-row: 3; }
       .tab-content:not(#tabHome) { max-width: 860px; width: 100%; margin-inline: auto; }
-      .fab-add { left: 32px; bottom: 32px; }
       .modal-overlay { align-items: center; }
+    }
+
+    @media (min-width: 1024px) {
+      body {
+        display: block;
+        padding: 20px 28px 40px;
+        padding-right: calc(268px + 28px);
+      }
+      .side-drawer {
+        transform: none !important;
+        width: 268px;
+        max-width: 268px;
+        box-shadow: none;
+        z-index: 40;
+      }
+      .drawer-backdrop,
+      .drawer-close-btn,
+      .menu-toggle-btn,
+      .mobile-bottom-nav {
+        display: none !important;
+      }
+      .app-container {
+        margin-inline: auto;
+        max-width: 1040px;
+      }
+      .toast { bottom: 28px; }
     }
 
     .wizard-step {
@@ -1299,7 +1444,7 @@ ${themeCssBlocks}
       </div>
     </div>
 
-    <div class="stat-card" id="totalCard" onclick="toggleGlobalPrivacy()">
+    <div class="stat-card" id="totalCard" role="button" tabindex="0" onclick="toggleGlobalPrivacy()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleGlobalPrivacy();}">
       <div class="hero-top-row">
         <span class="hero-title-group">
           <span class="hero-wallet-icon">
@@ -1311,9 +1456,9 @@ ${themeCssBlocks}
           </span>
           <span>إجمالي الأرصدة</span>
         </span>
-        <span class="hero-eye-btn">
+        <button type="button" class="hero-eye-btn" id="heroEyeBtn" aria-pressed="false" onclick="event.stopPropagation();toggleGlobalPrivacy()">
           <span id="heroEyeText">إظهار</span>
-        </span>
+        </button>
       </div>
       <div class="stat-value" id="totalBal"></div>
       <div class="hero-footer-row">
@@ -1323,13 +1468,13 @@ ${themeCssBlocks}
     </div>
 
     <div class="overview-row">
-      <div class="stat-card" onclick="toggleOverviewPrivacy('expense')">
+      <div class="stat-card" role="button" tabindex="0" onclick="toggleOverviewPrivacy('expense')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleOverviewPrivacy('expense');}">
         <span class="stat-label"><span>صرف الشهر الحالي</span></span>
-        <div class="stat-value expense-val" id="monthExpenseVal"><span class="stat-value is-masked">••••••</span></div>
+        <div class="stat-value expense-val" id="monthExpenseVal"><span class="stat-value is-masked" aria-hidden="true">••••••</span><span class="sr-only">الرصيد مخفي</span></div>
       </div>
-      <div class="stat-card" onclick="toggleOverviewPrivacy('income')">
+      <div class="stat-card" role="button" tabindex="0" onclick="toggleOverviewPrivacy('income')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleOverviewPrivacy('income');}">
         <span class="stat-label"><span>قبض الشهر الحالي</span></span>
-        <div class="stat-value income-val" id="monthIncomeVal"><span class="stat-value is-masked">••••••</span></div>
+        <div class="stat-value income-val" id="monthIncomeVal"><span class="stat-value is-masked" aria-hidden="true">••••••</span><span class="sr-only">الرصيد مخفي</span></div>
       </div>
     </div>
 
@@ -1566,16 +1711,21 @@ ${themeCssBlocks}
 
   <!-- ================= TAB 5: السجل ================= -->
   <div class="tab-content" id="tabHistory">
+    <div class="queue-banner" id="historyQueueBanner" role="status" aria-live="polite">
+      <span id="historyQueueText">توجد حركات بانتظار المزامنة مع الشيت</span>
+      <button type="button" class="btn-secondary" onclick="flushQueue()">مزامنة الآن</button>
+    </div>
+
     <div class="card">
       <div class="search-box">
-        <input type="text" id="txSearchInput" class="input-ctrl" placeholder="ابحث بالبيان أو التصنيف أو الحساب..." oninput="filterHistoryList()">
+        <input type="text" id="txSearchInput" class="input-ctrl" aria-label="بحث في سجل الحركات" placeholder="ابحث بالبيان أو التصنيف أو الحساب..." oninput="filterHistoryList()">
       </div>
 
       <div class="filter-chips">
-        <button type="button" class="f-chip active" onclick="setHistoryFilter('all', this)">الكل</button>
-        <button type="button" class="f-chip" onclick="setHistoryFilter('صرف', this)">صرف</button>
-        <button type="button" class="f-chip" onclick="setHistoryFilter('قبض', this)">قبض</button>
-        <button type="button" class="f-chip" onclick="setHistoryFilter('تحويل', this)">تحويلات</button>
+        <button type="button" class="f-chip active" aria-pressed="true" onclick="setHistoryFilter('all', this)">الكل</button>
+        <button type="button" class="f-chip" aria-pressed="false" onclick="setHistoryFilter('صرف', this)">صرف</button>
+        <button type="button" class="f-chip" aria-pressed="false" onclick="setHistoryFilter('قبض', this)">قبض</button>
+        <button type="button" class="f-chip" aria-pressed="false" onclick="setHistoryFilter('تحويل', this)">تحويلات</button>
       </div>
 
       <div id="fullHistoryList"></div>
@@ -2019,25 +2169,86 @@ ${themeCssBlocks}
   </div>
 </div>
 
+<!-- مودال تأكيد الإجراءات الحساسة داخل التطبيق -->
+<div class="modal-overlay" id="appConfirmModal" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle" onclick="if(event.target===this)closeAppConfirmModal()">
+  <div class="modal-sheet" style="max-width:400px;">
+    <div class="section-head" style="margin-bottom:10px;">
+      <span class="section-title" id="appConfirmTitle" style="color:var(--text);font-size:0.98rem;">تأكيد الإجراء</span>
+      <button type="button" class="drawer-close-btn" aria-label="إغلاق" onclick="closeAppConfirmModal()">✕</button>
+    </div>
+    <p id="appConfirmMsg" style="font-size:0.84rem;color:var(--text-muted);line-height:1.6;margin:0 0 16px;"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button type="button" class="btn-secondary" style="padding:9px 14px;" onclick="closeAppConfirmModal()">إلغاء</button>
+      <button type="button" class="btn-secondary" id="appConfirmOkBtn" style="padding:9px 16px;font-weight:800;" onclick="acceptAppConfirmModal()">تأكيد</button>
+    </div>
+  </div>
+</div>
+
 <!-- مودال تفاصيل وحذف وتعديل المعاملة -->
 <div class="modal-overlay" id="txModal" onclick="if(event.target===this)closeTx()">
   <div class="modal-sheet">
     <div id="txModalBody"></div>
-    <div class="dual-cols" style="margin-top:14px;">
+    <div id="txModalActions" class="dual-cols" style="margin-top:14px;">
       <button type="button" class="btn-secondary" style="flex:1;" onclick="startEdit()">تعديل</button>
-      <button type="button" class="btn-secondary" style="flex:1;color:var(--expense);" onclick="deleteTx()">حذف</button>
+      <button type="button" class="btn-secondary" style="flex:1;color:var(--expense);" onclick="showTxDeleteConfirm(true)">حذف</button>
+    </div>
+    <div id="txDeleteConfirmBar" style="display:none;margin-top:14px;padding:12px;border-radius:var(--radius-btn);border:1.5px solid var(--expense);background:var(--expense-bg);">
+      <div style="font-size:0.82rem;font-weight:800;color:var(--expense);margin-bottom:8px;">تأكيد حذف هذه الحركة نهائياً من الشيت؟</div>
+      <div class="dual-cols">
+        <button type="button" class="btn-danger-solid" style="flex:1;" onclick="confirmDeleteTx()">تأكيد الحذف</button>
+        <button type="button" class="btn-secondary" style="flex:1;" onclick="showTxDeleteConfirm(false)">إلغاء</button>
+      </div>
     </div>
     <button type="button" class="btn-secondary" style="width:100%;margin-top:8px;" onclick="closeTx()">إغلاق</button>
   </div>
 </div>
 
-<!-- زر الإضافة السريعة العائم -->
-<button type="button" class="fab-add" id="fabAddBtn" onclick="switchNavTab('add')" title="إضافة حركة جديدة" aria-label="إضافة حركة جديدة">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"></line>
-    <line x1="5" y1="12" x2="19" y2="12"></line>
-  </svg>
-</button>
+<!-- شريط التنقل السفلي للهاتف (يحل محل الزر العائم لمنع تداخل العناصر) -->
+<nav class="mobile-bottom-nav" aria-label="التنقل السريع">
+  <button type="button" class="bottom-nav-btn active" data-tab="home" aria-current="page" onclick="switchNavTab('home')">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+    <span>الرئيسية</span>
+  </button>
+
+  <button type="button" class="bottom-nav-btn" data-tab="history" onclick="switchNavTab('history')">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+    <span>السجل</span>
+  </button>
+
+  <div class="bottom-nav-add-wrap">
+    <button type="button" class="bottom-nav-add" id="bottomAddBtn" data-tab="add" onclick="switchNavTab('add')" aria-label="إضافة حركة جديدة" title="إضافة حركة جديدة">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+    <span class="bottom-nav-add-label">إضافة</span>
+  </div>
+
+  <button type="button" class="bottom-nav-btn" data-tab="debts" onclick="switchNavTab('debts')">
+    <span class="bottom-nav-badge" id="bottomDebtBadge">0</span>
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+      <line x1="2" y1="10" x2="22" y2="10"></line>
+    </svg>
+    <span>المستحقات</span>
+  </button>
+
+  <button type="button" class="bottom-nav-btn" id="bottomMoreBtn" onclick="openDrawer()" aria-label="المزيد من الأقسام">
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="1.5"></circle>
+      <circle cx="19" cy="12" r="1.5"></circle>
+      <circle cx="5" cy="12" r="1.5"></circle>
+    </svg>
+    <span>المزيد</span>
+  </button>
+</nav>
 
 <div class="toast" id="toastMessage">تم بنجاح</div>
 
@@ -2369,12 +2580,53 @@ ${themeCssBlocks}
     document.getElementById('lockScreen').style.display = "flex";
   }
 
+  let pendingAppConfirmAction = null;
+  function openAppConfirmModal(title, message, confirmLabel, onConfirm, isDanger) {
+    pendingAppConfirmAction = typeof onConfirm === 'function' ? onConfirm : null;
+    const titleEl = document.getElementById('appConfirmTitle');
+    const msgEl = document.getElementById('appConfirmMsg');
+    const okBtn = document.getElementById('appConfirmOkBtn');
+    const modal = document.getElementById('appConfirmModal');
+    if (titleEl) titleEl.innerText = title || 'تأكيد الإجراء';
+    if (msgEl) msgEl.innerText = message || '';
+    if (okBtn) {
+      okBtn.innerText = confirmLabel || 'تأكيد';
+      if (isDanger) {
+        okBtn.style.background = 'var(--danger)';
+        okBtn.style.color = '#fff';
+        okBtn.style.borderColor = 'var(--danger)';
+      } else {
+        okBtn.style.background = 'var(--accent-gradient)';
+        okBtn.style.color = 'var(--accent-contrast)';
+        okBtn.style.borderColor = 'transparent';
+      }
+    }
+    if (modal) modal.style.display = 'flex';
+  }
+  function closeAppConfirmModal() {
+    pendingAppConfirmAction = null;
+    const modal = document.getElementById('appConfirmModal');
+    if (modal) modal.style.display = 'none';
+  }
+  function acceptAppConfirmModal() {
+    const fn = pendingAppConfirmAction;
+    closeAppConfirmModal();
+    if (fn) fn();
+  }
+
   function removeUserPin() {
-    if (!confirm('إلغاء رمز الـ PIN عن هذا الملف؟')) return;
-    safeStorage.removeItem('app_user_pin');
-    storedPin = null;
-    refreshPinSettingsUI();
-    showToast('تم إلغاء رمز PIN بنجاح');
+    openAppConfirmModal(
+      'إلغاء رمز الحماية',
+      'هل تريد إلغاء رمز PIN عن هذا الملف؟ يمكنك تعيين رمز جديد لاحقاً من الإعدادات.',
+      'إلغاء الرمز',
+      function() {
+        safeStorage.removeItem('app_user_pin');
+        storedPin = null;
+        refreshPinSettingsUI();
+        showToast('تم إلغاء رمز PIN بنجاح');
+      },
+      true
+    );
   }
 
   function cancelPinChange() {
@@ -2590,7 +2842,15 @@ ${themeCssBlocks}
 
   function getQueue() { try { const r = JSON.parse(linkStorage.getItem('tx_queue') || '[]'); return Array.isArray(r) ? r.filter(x => typeof x === 'string').map(makeRequest) : []; } catch (e) { return []; } }
   function setQueue(q) { linkStorage.setItem('tx_queue', JSON.stringify(q)); updateQueueUI(); }
-  function updateQueueUI() { const el = document.getElementById('queueInfo'); if (el) el.innerText = getQueue().length + ' طلب بانتظار التأكيد'; }
+  function updateQueueUI() {
+    const count = getQueue().length;
+    const el = document.getElementById('queueInfo');
+    if (el) el.innerText = count + ' طلب بانتظار التأكيد';
+    const banner = document.getElementById('historyQueueBanner');
+    const bannerTxt = document.getElementById('historyQueueText');
+    if (banner) banner.classList.toggle('show', count > 0);
+    if (bannerTxt) bannerTxt.innerText = 'يوجد ' + count + ' حركة/طلب بانتظار المزامنة مع شيت جوجل';
+  }
   function queueTx(body) {
     const q = getQueue();
     const id = new URLSearchParams(body).get('requestId');
@@ -2719,10 +2979,37 @@ ${themeCssBlocks}
 
   function openDrawer() { document.getElementById('sideDrawer').classList.add('open'); document.getElementById('drawerBackdrop').classList.add('open'); }
   function closeDrawer() { document.getElementById('sideDrawer').classList.remove('open'); document.getElementById('drawerBackdrop').classList.remove('open'); }
+  let confirmDeleteKey = '';
+  function requestInlineDelete(key) {
+    confirmDeleteKey = key;
+    renderDebts();
+    renderReminders();
+  }
+  function cancelInlineDelete() {
+    confirmDeleteKey = '';
+    renderDebts();
+    renderReminders();
+  }
+
   function switchNavTab(tabName) {
     closeDrawer();
+    confirmDeleteKey = '';
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.drawer-item').forEach(el => el.classList.toggle('active', el.getAttribute('data-tab') === tabName));
+    document.querySelectorAll('.drawer-item').forEach(el => {
+      const isAct = el.getAttribute('data-tab') === tabName;
+      el.classList.toggle('active', isAct);
+      if (isAct) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+    });
+    document.querySelectorAll('.bottom-nav-btn[data-tab], .bottom-nav-add[data-tab]').forEach(el => {
+      const isAct = el.getAttribute('data-tab') === tabName;
+      el.classList.toggle('active', isAct);
+      if (isAct) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+    });
+    const moreBtn = document.getElementById('bottomMoreBtn');
+    if (moreBtn) {
+      const isSecondary = ['reminders', 'stats', 'setup', 'settings'].includes(tabName);
+      moreBtn.classList.toggle('active', isSecondary);
+    }
     const tabMap = {
       home: { id: 'tabHome', title: 'الرئيسية' },
       add: { id: 'tabAdd', title: 'الإضافة' },
@@ -2736,11 +3023,10 @@ ${themeCssBlocks}
     const target = tabMap[tabName] || tabMap.home;
     document.getElementById(target.id).classList.add('active');
     document.getElementById('screenHeading').innerText = target.title;
-    document.getElementById('fabAddBtn').classList.toggle('hidden', tabName === 'add' || tabName === 'setup');
     if (tabName === 'debts') renderDebts();
     if (tabName === 'reminders') renderReminders();
     if (tabName === 'stats') renderAnalytics();
-    if (tabName === 'history') filterHistoryList();
+    if (tabName === 'history') { updateQueueUI(); filterHistoryList(); }
     if (tabName === 'setup') refreshSetupWizardUI();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -2909,8 +3195,10 @@ ${themeCssBlocks}
     const total = appState.accounts.reduce((s, a) => s + cleanNumber(a.current), 0);
     let e = 0, i = 0;
     monthTxs().forEach(t => { const a = cleanNumber(t.amount); if (t.type === 'صرف') e += a; else if (t.type === 'قبض' || t.type === 'دخل') i += a; });
-    el.innerHTML = isGlobalVisible ? \`\${fmt(total)} <span class="hero-curr-tag">ج.م</span>\` : '<span class="hero-masked-dots">•••• ••••</span>';
+    el.innerHTML = isGlobalVisible ? \`\${fmt(total)} <span class="hero-curr-tag">ج.م</span>\` : '<span class="hero-masked-dots" aria-hidden="true">•••• ••••</span><span class="sr-only">الرصيد مخفي</span>';
     document.getElementById('heroEyeText').innerText = isGlobalVisible ? 'إخفاء' : 'إظهار';
+    const eyeBtn = document.getElementById('heroEyeBtn');
+    if (eyeBtn) eyeBtn.setAttribute('aria-pressed', isGlobalVisible ? 'true' : 'false');
     document.getElementById('heroAccCount').innerText = \`المحافظ: \${appState.accounts.length} حساب\`;
     document.getElementById('monthNet').innerText = isGlobalVisible ? ('صافي الشهر: ' + (i - e > 0 ? '+' : '') + fmt(i - e) + ' ج.م') : 'اضغط للكشف السريع';
   }
@@ -2927,10 +3215,10 @@ ${themeCssBlocks}
       const isVisible = isGlobalVisible || appState.unmaskedCards[idx];
       const isNegative = val < 0;
       const displayValue = !isVisible
-        ? '<span class="acc-value is-masked">••••••</span>'
+        ? '<span class="acc-value is-masked" aria-hidden="true">••••••</span><span class="sr-only">الرصيد مخفي</span>'
         : \`<span class="acc-value \${isNegative ? 'is-negative' : ''}">\${isNegative ? '-' : ''}\${fmt(Math.abs(val))} <span class="acc-cur">ج.م</span></span>\`;
       return \`
-        <div class="acc-card" onclick="toggleCardPrivacy(\${idx})">
+        <div class="acc-card" role="button" tabindex="0" onclick="toggleCardPrivacy(\${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCardPrivacy(\${idx});}">
           <div class="acc-top">
             <span class="acc-name">\${esc(acc.name)}</span>
             <span class="acc-kind">\${esc(acc.kind || 'محفظة')}</span>
@@ -2944,8 +3232,8 @@ ${themeCssBlocks}
     renderTotal();
     let expSum = 0, incSum = 0;
     monthTxs().forEach(t => { const amt = cleanNumber(t.amount); if (t.type === 'صرف') expSum += amt; else if (t.type === 'قبض' || t.type === 'دخل') incSum += amt; });
-    document.getElementById('monthExpenseVal').innerHTML = (isGlobalVisible || appState.overviewUnmasked.expense) ? fmt(expSum) + ' ج.م' : '<span class="stat-value is-masked">••••••</span>';
-    document.getElementById('monthIncomeVal').innerHTML = (isGlobalVisible || appState.overviewUnmasked.income) ? fmt(incSum) + ' ج.م' : '<span class="stat-value is-masked">••••••</span>';
+    document.getElementById('monthExpenseVal').innerHTML = (isGlobalVisible || appState.overviewUnmasked.expense) ? fmt(expSum) + ' ج.م' : '<span class="stat-value is-masked" aria-hidden="true">••••••</span><span class="sr-only">الرصيد مخفي</span>';
+    document.getElementById('monthIncomeVal').innerHTML = (isGlobalVisible || appState.overviewUnmasked.income) ? fmt(incSum) + ' ج.م' : '<span class="stat-value is-masked" aria-hidden="true">••••••</span><span class="sr-only">الرصيد مخفي</span>';
   }
 
   function renderRecentHome() {
@@ -2960,8 +3248,8 @@ ${themeCssBlocks}
     else if (t.type.includes('تحويل')) { amtClass = 'amt-tra'; sign = ''; }
     const accMeta = t.type.includes('تحويل') ? \`\${t.fromAcc} ← \${t.toAcc}\` : t.fromAcc;
     return \`
-      <div class="tx-item" \${t.row ? \`onclick="openTx(\${t.row})" style="cursor:pointer"\` : ''}>
-        <div>
+      <div class="tx-item" \${t.row ? \`role="button" tabindex="0" onclick="openTx(\${t.row})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTx(\${t.row});}" style="cursor:pointer"\` : ''}>
+        <div style="min-width:0;">
           <div class="tx-primary">\${esc(t.desc || t.category || t.type)}</div>
           <div class="tx-secondary">\${esc(t.category)} · \${esc(accMeta)} · \${esc(t.date)}</div>
         </div>
@@ -2971,9 +3259,22 @@ ${themeCssBlocks}
 
   function setHistoryFilter(type, el) {
     appState.historyFilter = type;
-    el.parentElement.querySelectorAll('.f-chip').forEach(c => c.classList.remove('active'));
+    el.parentElement.querySelectorAll('.f-chip').forEach(c => { c.classList.remove('active'); c.setAttribute('aria-pressed', 'false'); });
     el.classList.add('active');
+    el.setAttribute('aria-pressed', 'true');
     filterHistoryList();
+  }
+
+  function formatHistoryDateLabel(dateStr) {
+    const clean = String(dateStr || '').trim();
+    if (!clean) return 'بدون تاريخ';
+    const today = localDateKey();
+    const yestDate = new Date();
+    yestDate.setDate(yestDate.getDate() - 1);
+    const yesterday = localDateKey(yestDate);
+    if (clean === today) return 'اليوم · ' + clean;
+    if (clean === yesterday) return 'أمس · ' + clean;
+    return clean;
   }
 
   function filterHistoryList() {
@@ -2986,7 +3287,25 @@ ${themeCssBlocks}
     if (query) {
       filtered = filtered.filter(t => String(t.desc || '').toLowerCase().includes(query) || String(t.category || '').toLowerCase().includes(query) || String(t.fromAcc || '').toLowerCase().includes(query) || String(t.toAcc || '').toLowerCase().includes(query));
     }
-    container.innerHTML = filtered.length ? filtered.map(t => createTxRowHtml(t)).join('') : '<div style="text-align:center;color:var(--text-muted);padding:18px;font-size:0.85rem;">لا توجد معاملات مطابقة</div>';
+    if (!filtered.length) {
+      container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:18px;font-size:0.85rem;">لا توجد معاملات مطابقة</div>';
+      return;
+    }
+    const groups = [];
+    const groupMap = {};
+    filtered.forEach(t => {
+      const k = String(t.date || '').trim() || 'بدون تاريخ';
+      if (!groupMap[k]) { groupMap[k] = { date: k, items: [] }; groups.push(groupMap[k]); }
+      groupMap[k].items.push(t);
+    });
+    container.innerHTML = groups.map(g => \`
+      <div class="history-date-group">
+        <div class="history-date-head">
+          <span>\${esc(formatHistoryDateLabel(g.date))}</span>
+          <span>\${g.items.length} حركة</span>
+        </div>
+        \${g.items.map(t => createTxRowHtml(t)).join('')}
+      </div>\`).join('');
   }
 
   const isDebtLya = t => ['ليا', 'مدين (ليا)', 'مدين'].includes(String(t || '').trim());
@@ -3013,6 +3332,8 @@ ${themeCssBlocks}
     const pending = (appState.debts || []).filter(d => d.status !== 'تم السداد').length;
     const badge = document.getElementById('drawerDebtBadge');
     if (badge) { badge.innerText = pending; badge.classList.toggle('show', pending > 0); }
+    const bBadge = document.getElementById('bottomDebtBadge');
+    if (bBadge) { bBadge.innerText = pending > 99 ? '99+' : String(pending); bBadge.classList.toggle('show', pending > 0); }
     document.getElementById('totalLyaVal').innerText = fmt(lya) + ' ج.م';
     document.getElementById('totalAlyaVal').innerText = fmt(alya) + ' ج.م';
     const net = lya - alya;
@@ -3030,19 +3351,27 @@ ${themeCssBlocks}
     container.innerHTML = list.length ? list.map(d => {
       const isLya = isDebtLya(d.type);
       const isPaid = d.status === 'تم السداد';
+      const itemId = String(d.id || d.row);
+      const isConfirming = confirmDeleteKey === 'debt:' + itemId;
+      const actionControls = isConfirming
+        ? \`<div class="inline-confirm-row">
+            <button type="button" class="btn-danger-solid" onclick="confirmDeleteDebtItem('\${esc(itemId)}')">تأكيد الحذف</button>
+            <button type="button" class="btn-secondary" style="padding:4px 8px;font-size:0.75rem;" onclick="cancelInlineDelete()">إلغاء</button>
+          </div>\`
+        : \`<button type="button" class="btn-secondary" style="padding:4px 8px;font-size:0.75rem;\${isPaid ? '' : 'border-color:var(--primary-accent);color:var(--income);'}" onclick="\${isPaid ? \`toggleDebtStatus('\${esc(itemId)}', 'مستحق')\` : \`settleDebtNow('\${esc(itemId)}')\`}">\${isPaid ? 'إعادة فتح' : 'سداد ←'}</button>
+          <button type="button" class="btn-secondary" aria-label="حذف المستحق" title="حذف" style="padding:4px 8px;color:var(--expense);font-size:0.75rem;" onclick="requestInlineDelete('debt:\${esc(itemId)}')">✕</button>\`;
       return \`
         <div class="tx-item" style="opacity:\${isPaid ? '0.6' : '1'};">
-          <div>
+          <div style="min-width:0;">
             <div class="tx-primary">\${esc(d.desc)}</div>
             <div class="tx-secondary">
               <span class="state-txt \${isLya ? 'state-lya' : 'state-alya'}">\${isLya ? 'مدين (ليا)' : 'داين (عليا)'}</span> ·
               <span class="state-txt \${isPaid ? 'state-paid' : 'state-due'}">\${isPaid ? 'تم السداد' : 'مستحق'}</span> · \${esc(d.date)}
             </div>
           </div>
-          <div class="tx-left" style="display:flex;align-items:center;gap:8px;">
+          <div class="tx-left" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             <span class="tx-amt \${isLya ? 'amt-inc' : 'amt-exp'}">\${fmt(d.amount)}</span>
-            <button type="button" class="btn-secondary" style="padding:4px 8px;font-size:0.75rem;\${isPaid ? '' : 'border-color:var(--primary-accent);color:var(--income);'}" onclick="\${isPaid ? \`toggleDebtStatus('\${esc(d.id || d.row)}', 'مستحق')\` : \`settleDebtNow('\${esc(d.id || d.row)}')\`}">\${isPaid ? 'إعادة فتح' : 'سداد ←'}</button>
-            <button type="button" class="btn-secondary" style="padding:4px 8px;color:var(--expense);font-size:0.75rem;" onclick="deleteDebtItem('\${esc(d.id || d.row)}')">✕</button>
+            \${actionControls}
           </div>
         </div>\`;
     }).join('') : '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.85rem;">لا توجد مستحقات</div>';
@@ -3110,12 +3439,12 @@ ${themeCssBlocks}
     const res = await sendOrQueue(new URLSearchParams({ action: 'update_debt_status', id: item.id || '', row: item.id ? '' : item.row, status: newStatus }).toString());
     if (res.ok) { item.status = newStatus; renderDebts(); saveCache(); setTimeout(fetchData, 500); }
   }
-  async function deleteDebtItem(identifier) {
-    if (!confirm('حذف هذا المستحق نهائياً؟')) return;
+  async function confirmDeleteDebtItem(identifier) {
+    confirmDeleteKey = '';
     const item = appState.debts.find(d => String(d.id) === String(identifier) || String(d.row) === String(identifier));
     if (!item) return;
     const res = await sendOrQueue(new URLSearchParams({ action: 'delete_debt', id: item.id || '', row: item.id ? '' : item.row }).toString());
-    if (res.ok) { appState.debts = appState.debts.filter(d => d !== item); renderDebts(); saveCache(); setTimeout(fetchData, 500); }
+    if (res.ok) { appState.debts = appState.debts.filter(d => d !== item); renderDebts(); saveCache(); showToast('تم حذف المستحق'); if (!res.demo) setTimeout(fetchData, 500); }
   }
 
   function renderReminders() {
@@ -3134,16 +3463,24 @@ ${themeCssBlocks}
       const todayParts = today.split('-').map(Number);
       const diff = Math.round((Date.UTC(dueParts[0], (dueParts[1] || 1) - 1, dueParts[2] || 1) - Date.UTC(todayParts[0], todayParts[1] - 1, todayParts[2])) / 86400000);
       const stateHtml = isPaid ? '<span class="state-txt state-paid">تم الدفع</span>' : diff < 0 ? \`<span class="state-txt state-overdue">متأخر (\${Math.abs(diff)} يوم)</span>\` : diff === 0 ? '<span class="state-txt state-overdue">موعده اليوم</span>' : \`<span class="state-txt state-due">باقي \${diff} يوم</span>\`;
+      const itemId = String(r.id || r.row);
+      const isConfirming = confirmDeleteKey === 'rem:' + itemId;
+      const actionControls = isConfirming
+        ? \`<div class="inline-confirm-row">
+            <button type="button" class="btn-danger-solid" onclick="confirmDeleteReminderItem('\${esc(itemId)}')">تأكيد الحذف</button>
+            <button type="button" class="btn-secondary" style="padding:4px 8px;font-size:0.75rem;" onclick="cancelInlineDelete()">إلغاء</button>
+          </div>\`
+        : \`\${!isPaid ? \`<button type="button" class="btn-secondary" style="padding:4px 8px;border-color:var(--primary-accent);color:var(--income);font-size:0.75rem;" onclick="payReminderNow('\${esc(itemId)}')">سداد ←</button>\` : ''}
+          <button type="button" class="btn-secondary" aria-label="حذف التنبيه" title="حذف" style="padding:4px 8px;color:var(--expense);font-size:0.75rem;" onclick="requestInlineDelete('rem:\${esc(itemId)}')">✕</button>\`;
       return \`
         <div class="tx-item" style="opacity:\${isPaid ? '0.6' : '1'};">
-          <div>
+          <div style="min-width:0;">
             <div class="tx-primary">\${esc(r.desc)}</div>
             <div class="tx-secondary">\${stateHtml} · \${esc(r.dueDate)} · \${esc(r.repeat || 'شهري')}</div>
           </div>
-          <div class="tx-left" style="display:flex;align-items:center;gap:6px;">
+          <div class="tx-left" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             <span class="tx-amt amt-exp">\${fmt(r.amount)}</span>
-            \${!isPaid ? \`<button type="button" class="btn-secondary" style="padding:4px 8px;border-color:var(--primary-accent);color:var(--income);font-size:0.75rem;" onclick="payReminderNow('\${esc(r.id || r.row)}')">سداد ←</button>\` : ''}
-            <button type="button" class="btn-secondary" style="padding:4px 8px;color:var(--expense);font-size:0.75rem;" onclick="deleteReminderItem('\${esc(r.id || r.row)}')">✕</button>
+            \${actionControls}
           </div>
         </div>\`;
     }).join('') : '<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:0.85rem;">لا توجد تنبيهات</div>';
@@ -3176,16 +3513,16 @@ ${themeCssBlocks}
     appState.reminders.push(newObj); renderReminders(); saveCache();
     document.getElementById('remDesc').value = ''; document.getElementById('remAmount').value = ''; document.getElementById('remNotes').value = '';
     const res = await sendOrQueue(new URLSearchParams({ action: 'add_reminder', id: newObj.id, dueDate, desc, amount, repeat, status: 'قادم', notes }).toString());
-    if (res.ok) setTimeout(fetchData, 500);
+    if (res.ok && !res.demo) setTimeout(fetchData, 500);
     btn.disabled = false; btn.innerText = 'حفظ التنبيه في الشيت';
   }
 
-  async function deleteReminderItem(identifier) {
-    if (!confirm('حذف هذا التنبيه نهائياً؟')) return;
+  async function confirmDeleteReminderItem(identifier) {
+    confirmDeleteKey = '';
     const item = appState.reminders.find(r => String(r.id) === String(identifier) || String(r.row) === String(identifier));
     if (!item) return;
     const res = await sendOrQueue(new URLSearchParams({ action: 'delete_reminder', id: item.id || '', row: item.id ? '' : item.row }).toString());
-    if (res.ok) { appState.reminders = appState.reminders.filter(r => r !== item); renderReminders(); saveCache(); setTimeout(fetchData, 500); }
+    if (res.ok) { appState.reminders = appState.reminders.filter(r => r !== item); renderReminders(); saveCache(); showToast('تم حذف التنبيه'); if (!res.demo) setTimeout(fetchData, 500); }
   }
 
   function getBudgets() { try { return JSON.parse(linkStorage.getItem('budgets') || '{}'); } catch (e) { return {}; } }
@@ -3486,17 +3823,34 @@ ${themeCssBlocks}
   function openTx(row) {
     selTx = appState.recent.find(t => String(t.row) === String(row));
     if (!selTx) return;
+    showTxDeleteConfirm(false);
     document.getElementById('txModalBody').innerHTML = \`<div class="tx-primary" style="font-size:1.05rem;">\${esc(selTx.desc || selTx.category)}</div><div class="tx-secondary" style="margin-top:6px;line-height:1.7;">\${esc(selTx.type)} · \${esc(selTx.category)} · \${esc(selTx.fromAcc)}\${selTx.toAcc ? ' ← ' + esc(selTx.toAcc) : ''}<br>\${esc(selTx.date)} · \${fmt(cleanNumber(selTx.amount))} ج.م</div>\`;
     document.getElementById('txModal').classList.add('open');
   }
-  function closeTx() { document.getElementById('txModal').classList.remove('open'); }
+  function showTxDeleteConfirm(show) {
+    const actions = document.getElementById('txModalActions');
+    const bar = document.getElementById('txDeleteConfirmBar');
+    if (actions) actions.style.display = show ? 'none' : 'flex';
+    if (bar) bar.style.display = show ? 'block' : 'none';
+  }
+  function closeTx() { showTxDeleteConfirm(false); document.getElementById('txModal').classList.remove('open'); }
   async function mutate(p) {
     const res = await sendOrQueue(p.toString());
-    if (res.ok) { showToast('تم تأكيد التعديل في الشيت'); setTimeout(fetchData, 500); }
+    if (res.ok) {
+      if (res.demo) {
+        if (p.get('action') === 'delete' && selTx) {
+          appState.recent = appState.recent.filter(t => t !== selTx);
+          renderRecentHome(); filterHistoryList(); renderMonthlyOverview(); renderAnalytics();
+        }
+        showToast('تم تنفيذ التعديل في وضع التجربة');
+      } else {
+        showToast('تم تأكيد التعديل في الشيت'); setTimeout(fetchData, 500);
+      }
+    }
     else if (res.permanent) showToast('رفض الشيت التعديل: ' + res.error.message);
   }
-  function deleteTx() {
-    if (!selTx || !confirm('حذف هذه الحركة من الشيت نهائياً؟')) return;
+  function confirmDeleteTx() {
+    if (!selTx) return;
     const p = new URLSearchParams({ action: 'delete', row: selTx.row, fp: txFp(selTx) });
     closeTx(); mutate(p);
   }
@@ -3521,11 +3875,18 @@ ${themeCssBlocks}
   }
 
   async function triggerRemoteSheetSetup() {
-    if (!confirm('سيتم تحديث تنسيق الجداول، المعادلات، والقوائم المنسدلة داخل شيت Google Sheets. هل تريد المتابعة؟')) return;
-    showToast('جارٍ تنسيق الشيت...');
-    const res = await sendOrQueue(new URLSearchParams({ action: 'setup_sheet' }).toString());
-    if (res.ok) { showToast('تم تظبيط وتنسيق الشيت بالكامل ✅'); setTimeout(fetchData, 600); }
-    else if (res.permanent) showToast('خطأ: ' + res.error.message);
+    openAppConfirmModal(
+      'تظبيط وتنسيق الشيت',
+      'سيتم تحديث تنسيق الجداول، المعادلات، والقوائم المنسدلة داخل شيت Google Sheets. هل تريد المتابعة؟',
+      'متابعة التنسيق',
+      async function() {
+        showToast('جارٍ تنسيق الشيت...');
+        const res = await sendOrQueue(new URLSearchParams({ action: 'setup_sheet' }).toString());
+        if (res.ok) { showToast('تم تظبيط وتنسيق الشيت بالكامل ✅'); setTimeout(fetchData, 600); }
+        else if (res.permanent) showToast('خطأ: ' + res.error.message);
+      },
+      false
+    );
   }
 
   function loadXLSX() {
@@ -3562,16 +3923,23 @@ ${themeCssBlocks}
     reader.onload = function(e) {
       try {
         const data = JSON.parse(e.target.result);
-        if (!confirm('استعادة هذه النسخة محلياً؟')) return;
-        if (Array.isArray(data.accounts)) appState.accounts = data.accounts;
-        if (data.categories) appState.categories = data.categories;
-        if (Array.isArray(data.paymentMethods)) appState.paymentMethods = data.paymentMethods;
-        if (Array.isArray(data.recent)) appState.recent = data.recent;
-        if (Array.isArray(data.debts)) appState.debts = data.debts;
-        if (Array.isArray(data.reminders)) appState.reminders = data.reminders;
-        if (data.theme) { safeStorage.setItem('theme', data.theme); applyTheme(); }
-        saveCache(); refreshAccountSelects(); renderCards(); renderRecentHome(); renderMonthlyOverview(); renderDebts(); renderReminders(); renderAnalytics();
-        showToast('تمت الاستعادة بنجاح');
+        openAppConfirmModal(
+          'استعادة نسخة احتياطية',
+          'سيتم استبدال البيانات المحفوظة محلياً بمحتوى ملف النسخة الاحتياطية المختار. هل تريد المتابعة؟',
+          'استعادة النسخة',
+          function() {
+            if (Array.isArray(data.accounts)) appState.accounts = data.accounts;
+            if (data.categories) appState.categories = data.categories;
+            if (Array.isArray(data.paymentMethods)) appState.paymentMethods = data.paymentMethods;
+            if (Array.isArray(data.recent)) appState.recent = data.recent;
+            if (Array.isArray(data.debts)) appState.debts = data.debts;
+            if (Array.isArray(data.reminders)) appState.reminders = data.reminders;
+            if (data.theme) { safeStorage.setItem('theme', data.theme); applyTheme(); }
+            saveCache(); refreshAccountSelects(); renderCards(); renderRecentHome(); renderMonthlyOverview(); renderDebts(); renderReminders(); renderAnalytics();
+            showToast('تمت الاستعادة بنجاح');
+          },
+          false
+        );
       } catch (err) { showToast('ملف غير صالح'); } finally { event.target.value = ''; }
     };
     reader.readAsText(file);
